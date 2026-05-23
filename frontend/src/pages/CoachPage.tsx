@@ -4,13 +4,36 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { evaluatePronunciation } from '../store/slices/pronounceSlice'
 import { Mic, Square, Volume2, RotateCcw, Star } from 'lucide-react'
 
+// Extend window type for cross-browser Speech Recognition
+interface ISpeechRecognition extends EventTarget {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  start(): void
+  stop(): void
+  onresult: ((e: SpeechRecognitionEvent) => void) | null
+  onerror: ((e: SpeechRecognitionErrorEvent) => void) | null
+  onend: (() => void) | null
+}
+
+interface ISpeechRecognitionConstructor {
+  new (): ISpeechRecognition
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: ISpeechRecognitionConstructor
+    webkitSpeechRecognition?: ISpeechRecognitionConstructor
+  }
+}
+
 const DAILY_PHRASES = [
-  { de: 'Ich heiße…',                   en: 'My name is…',            ipa: '[ikh HY-seh]' },
-  { de: 'Woher kommen Sie?',            en: 'Where are you from?',    ipa: '[vo-HAIR KOM-en zee]' },
-  { de: 'Ich komme aus Nigeria',        en: 'I come from Nigeria',    ipa: '[ikh KOM-eh ows nee-GAIR-ee-ah]' },
-  { de: 'Auf Wiedersehen',             en: 'Goodbye',                 ipa: '[owf VEE-der-zayn]' },
+  { de: 'Ich heiße…',                   en: 'My name is…',              ipa: '[ikh HY-seh]' },
+  { de: 'Woher kommen Sie?',            en: 'Where are you from?',      ipa: '[vo-HAIR KOM-en zee]' },
+  { de: 'Ich komme aus Nigeria',        en: 'I come from Nigeria',      ipa: '[ikh KOM-eh ows nee-GAIR-ee-ah]' },
+  { de: 'Auf Wiedersehen',             en: 'Goodbye',                   ipa: '[owf VEE-der-zayn]' },
   { de: 'Bitte sprechen Sie langsamer', en: 'Please speak more slowly', ipa: '[BIT-eh SHPREKH-en zee LANG-zah-mer]' },
-  { de: 'Können Sie das wiederholen?', en: 'Can you repeat that?',    ipa: '[KER-nen zee das VEE-der-HOH-len]' },
+  { de: 'Können Sie das wiederholen?', en: 'Can you repeat that?',      ipa: '[KER-nen zee das VEE-der-HOH-len]' },
 ]
 
 export default function CoachPage() {
@@ -20,7 +43,7 @@ export default function CoachPage() {
   const [target, setTarget] = useState('Guten Morgen, wie geht es Ihnen?')
   const [spoken, setSpoken] = useState('')
   const [isRecording, setIsRecording] = useState(false)
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const recognitionRef = useRef<ISpeechRecognition | null>(null)
 
   const speak = (text: string) => {
     speechSynthesis.cancel()
@@ -30,7 +53,7 @@ export default function CoachPage() {
   }
 
   const startRecording = () => {
-    const SR = window.SpeechRecognition || (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) return toast.error('Speech recognition not supported. Use Google Chrome.')
 
     const recognition = new SR()
@@ -67,7 +90,7 @@ export default function CoachPage() {
   const handleEvaluate = async () => {
     if (!spoken.trim()) return toast.error('Record yourself first')
     const result = await dispatch(evaluatePronunciation({ targetPhrase: target, spokenText: spoken }))
-    if (result.error) toast.error(String(result.payload))
+    if ('error' in result) toast.error(String(result.payload))
   }
 
   const handleClear = () => {
