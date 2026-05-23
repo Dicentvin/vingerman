@@ -5,7 +5,7 @@ import {
   generateVocabList, fetchVocabLists, deleteVocabList,
   markWordMastered, setCurrentList,
 } from '../store/slices/vocabSlice'
-import { BookOpen, Volume2, Trash2, CheckCircle, Circle, Plus } from 'lucide-react'
+import { BookOpen, Volume2, Trash2, CheckCircle, Circle, Plus, ChevronLeft } from 'lucide-react'
 
 const PRESET_TOPICS = [
   { key: 'greetings', label: '👋 Greetings' },
@@ -23,6 +23,8 @@ export default function VocabPage() {
   const { lists, currentList, loading } = useAppSelector(s => s.vocab)
   const [selectedTopic, setSelectedTopic] = useState('greetings')
   const [customTopic, setCustomTopic] = useState('')
+  // Mobile: track which "panel" is showing — 'list' or 'words'
+  const [mobileView, setMobileView] = useState<'list' | 'words'>('list')
 
   useEffect(() => { dispatch(fetchVocabLists()) }, [dispatch])
 
@@ -38,6 +40,11 @@ export default function VocabPage() {
     e.stopPropagation()
     await dispatch(deleteVocabList(id))
     toast.success('List deleted')
+  }
+
+  const handleSelectList = (list: typeof currentList) => {
+    dispatch(setCurrentList(list))
+    setMobileView('words')
   }
 
   const handleToggleMastered = (wordId: string, mastered: boolean) => {
@@ -56,15 +63,17 @@ export default function VocabPage() {
   const totalCount = currentList?.words?.length ?? 0
 
   return (
-    <div className="p-8 max-w-4xl mx-auto animate-fade-in">
-      <div className="mb-6">
-        <h1 className="font-display text-3xl text-gray-100">Vocabulary Builder</h1>
+    <div className="p-4 sm:p-6 md:p-8 max-w-4xl mx-auto animate-fade-in">
+      <div className="mb-5 md:mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Vocabulary Builder</h1>
         <p className="text-gray-500 text-sm mt-1">Generate topic-based word lists, saved to your account</p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-5">
-        {/* Left: generator + saved lists */}
-        <div className="md:col-span-1 space-y-4">
+      {/* Desktop: side-by-side. Mobile: toggle between panels */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+
+        {/* Left panel — hidden on mobile when viewing words */}
+        <div className={`md:col-span-1 space-y-4 ${mobileView === 'words' ? 'hidden md:block' : 'block'}`}>
           <div className="card">
             <label className="section-label">Choose Topic</label>
             <div className="flex flex-wrap gap-1.5 mb-3">
@@ -102,7 +111,7 @@ export default function VocabPage() {
                 {lists.map(list => (
                   <div
                     key={list._id}
-                    onClick={() => dispatch(setCurrentList(list))}
+                    onClick={() => handleSelectList(list)}
                     className={`flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all group
                       ${currentList?._id === list._id ? 'bg-gold/10 text-gold' : 'hover:bg-ink-800 text-gray-300'}`}
                   >
@@ -122,16 +131,26 @@ export default function VocabPage() {
           )}
         </div>
 
-        {/* Right: word list */}
-        <div className="md:col-span-2">
+        {/* Right panel — word list */}
+        <div className={`md:col-span-2 ${mobileView === 'list' && currentList ? 'hidden md:block' : 'block'}`}>
+          {/* Mobile back button */}
+          {mobileView === 'words' && (
+            <button
+              onClick={() => setMobileView('list')}
+              className="md:hidden flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 mb-3 transition-colors"
+            >
+              <ChevronLeft size={16} /> Back to lists
+            </button>
+          )}
+
           {currentList ? (
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="font-display text-xl text-gray-100 capitalize">{currentList.topic}</h2>
+                  <h2 className="font-display text-lg sm:text-xl text-gray-100 capitalize">{currentList.topic}</h2>
                   <p className="text-xs text-gray-500 mt-0.5">{masteredCount}/{totalCount} mastered</p>
                 </div>
-                <div className="w-24">
+                <div className="w-20 sm:w-24">
                   <div className="h-1.5 bg-ink-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-teal-soft rounded-full transition-all"
@@ -141,7 +160,7 @@ export default function VocabPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[480px] sm:max-h-[520px] overflow-y-auto pr-1">
                 {currentList.words?.map((word, idx) => (
                   <div
                     key={word._id || idx}
@@ -180,13 +199,14 @@ export default function VocabPage() {
               </div>
             </div>
           ) : (
-            <div className="card flex flex-col items-center justify-center py-16 text-center">
+            <div className="card flex flex-col items-center justify-center py-12 sm:py-16 text-center">
               <BookOpen size={40} className="text-gray-700 mb-3" />
               <p className="text-gray-500 text-sm">Generate or select a vocabulary list</p>
               <p className="text-gray-600 text-xs mt-1">Your word lists are saved to your account</p>
             </div>
           )}
         </div>
+
       </div>
     </div>
   )

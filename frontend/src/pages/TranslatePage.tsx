@@ -31,13 +31,14 @@ export default function TranslatePage() {
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto animate-fade-in">
-      <div className="mb-6">
-        <h1 className="font-display text-3xl text-gray-100">Translate Material</h1>
+    <div className="p-4 sm:p-6 md:p-8 max-w-4xl mx-auto animate-fade-in">
+      <div className="mb-5 md:mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Translate Material</h1>
         <p className="text-gray-500 text-sm mt-1">German ↔ English with grammar explanations</p>
       </div>
 
-      <div className="flex items-center gap-3 mb-5">
+      {/* Direction toggle */}
+      <div className="flex items-center gap-3 mb-4 md:mb-5">
         <span className="text-sm font-medium text-gray-300">{from}</span>
         <button
           onClick={() => dispatch(setDirection(direction === 'de-en' ? 'en-de' : 'de-en'))}
@@ -48,11 +49,12 @@ export default function TranslatePage() {
         <span className="text-sm font-medium text-gray-300">{to}</span>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4 mb-4">
+      {/* Text areas — stack on mobile, side by side on md+ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
         <div>
           <label className="section-label">{from}</label>
           <textarea
-            className="textarea min-h-[180px]"
+            className="textarea min-h-[140px] sm:min-h-[180px]"
             placeholder={`Type ${direction === 'de-en' ? 'German' : 'English'} text…`}
             value={text}
             onChange={e => setText(e.target.value)}
@@ -70,7 +72,7 @@ export default function TranslatePage() {
 
         <div>
           <label className="section-label">{to}</label>
-          <div className="textarea min-h-[180px] text-sm leading-relaxed">
+          <div className="textarea min-h-[140px] sm:min-h-[180px] text-sm leading-relaxed">
             {loading
               ? <span className="text-gray-500 flex items-center gap-2"><span className="spinner" /> Translating…</span>
               : translated
@@ -90,11 +92,11 @@ export default function TranslatePage() {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <button onClick={handleTranslate} className="btn-primary" disabled={loading}>
+        <button onClick={handleTranslate} className="btn-primary flex-1 sm:flex-none justify-center" disabled={loading}>
           {loading ? <span className="spinner" /> : <ArrowLeftRight size={15} />}
           Translate
         </button>
-        <button onClick={handleGrammar} className="btn-secondary" disabled={grammarLoading}>
+        <button onClick={handleGrammar} className="btn-secondary flex-1 sm:flex-none justify-center" disabled={grammarLoading}>
           {grammarLoading ? <span className="spinner" /> : <BookOpen size={15} />}
           Explain Grammar
         </button>

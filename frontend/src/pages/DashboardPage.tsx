@@ -17,15 +17,15 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? 'Guten Morgen' : hour < 17 ? 'Guten Tag' : 'Guten Abend'
 
   return (
-    <div className="p-8 max-w-4xl mx-auto animate-fade-in">
+    <div className="p-4 sm:p-6 md:p-8 max-w-4xl mx-auto animate-fade-in">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <p className="text-gray-500 text-sm mb-1">{greeting},</p>
-        <h1 className="font-display text-3xl text-gray-100">{user?.name || 'Learner'} 👋</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">{user?.name || 'Learner'} 👋</h1>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-6 md:mb-8">
         {[
           { label: 'Total XP',     value: user?.totalXP || 0,         icon: Zap,      color: 'text-gold' },
           { label: 'Day Streak',   value: user?.streak || 0,          icon: Flame,    color: 'text-orange-400', suffix: '🔥' },
@@ -34,15 +34,15 @@ export default function DashboardPage() {
         ].map(({ label, value, icon: Icon, color, suffix }) => (
           <div key={label} className="card-sm">
             <Icon size={16} className={`${color} mb-2`} />
-            <p className="text-2xl font-display text-gray-100">{value}{suffix}</p>
+            <p className="text-xl sm:text-2xl font-display text-gray-100">{value}{suffix}</p>
             <p className="text-xs text-gray-500 mt-0.5">{label}</p>
           </div>
         ))}
       </div>
 
       {/* Features grid */}
-      <h2 className="section-label mb-4">Modules</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <h2 className="section-label mb-3 md:mb-4">Modules</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
         {features.map(({ to, icon: Icon, label, desc, color, bg }) => (
           <Link
             key={to}
@@ -61,7 +61,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Tip of the day */}
-      <div className="mt-6 p-4 bg-gold/5 border border-gold/15 rounded-2xl">
+      <div className="mt-5 md:mt-6 p-4 bg-gold/5 border border-gold/15 rounded-2xl">
         <p className="text-xs text-gold/70 uppercase tracking-widest mb-1">Tipp des Tages</p>
         <p className="text-sm text-gray-300">
           In German, all nouns are capitalized — <span className="text-gold">der Hund</span> (the dog),{' '}

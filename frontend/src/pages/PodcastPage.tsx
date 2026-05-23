@@ -56,26 +56,26 @@ export default function PodcastPage() {
   const handleCopy = () => { navigator.clipboard.writeText(script); toast.success('Copied!') }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto animate-fade-in">
-      <div className="mb-6">
-        <h1 className="font-display text-3xl text-gray-100">File to Podcast</h1>
+    <div className="p-4 sm:p-6 md:p-8 max-w-3xl mx-auto animate-fade-in">
+      <div className="mb-5 md:mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">File to Podcast</h1>
         <p className="text-gray-500 text-sm mt-1">Upload learning material → get an AI podcast script</p>
       </div>
 
       {/* Upload zone */}
       <div
-        className={`card mb-4 border-dashed border-2 cursor-pointer transition-all text-center py-10
+        className={`card mb-4 border-dashed border-2 cursor-pointer transition-all text-center py-8 sm:py-10
           ${dragover ? 'border-teal-soft/60 bg-teal-muted' : 'border-white/10 hover:border-gold/30 hover:bg-gold/5'}`}
         onClick={() => fileRef.current?.click()}
         onDragOver={e => { e.preventDefault(); setDragover(true) }}
         onDragLeave={() => setDragover(false)}
         onDrop={e => { e.preventDefault(); setDragover(false); handleFileUpload(e.dataTransfer.files[0]) }}
       >
-        <Upload size={32} className="text-gray-600 mx-auto mb-3" />
-        <p className="text-gray-300 font-medium">
+        <Upload size={28} className="text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-300 font-medium text-sm sm:text-base">
           {uploading ? 'Uploading…' : 'Drop PDF, PPTX, or TXT here'}
         </p>
-        <p className="text-gray-600 text-xs mt-1">or click to browse</p>
+        <p className="text-gray-600 text-xs mt-1">or tap to browse</p>
         <input
           ref={fileRef}
           type="file"
@@ -115,7 +115,7 @@ export default function PodcastPage() {
             <button
               key={s}
               onClick={() => dispatch(setStyle(s))}
-              className={`btn-secondary capitalize ${style === s ? 'border-gold/50 text-gold bg-gold/5' : ''}`}
+              className={`btn-secondary capitalize flex-1 sm:flex-none justify-center ${style === s ? 'border-gold/50 text-gold bg-gold/5' : ''}`}
             >
               {s === 'educational' ? '🎓' : s === 'conversational' ? '💬' : '📖'} {s}
             </button>
@@ -123,14 +123,14 @@ export default function PodcastPage() {
         </div>
       </div>
 
-      <button onClick={handleGenerate} className="btn-primary" disabled={loading}>
+      <button onClick={handleGenerate} className="btn-primary w-full sm:w-auto justify-center" disabled={loading}>
         {loading ? <span className="spinner" /> : <Mic2 size={16} />}
         {loading ? 'Generating…' : 'Generate Podcast Script'}
       </button>
 
       {script && (
         <div className="mt-6 card animate-slide-up">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <h3 className="font-medium text-gray-200 flex items-center gap-2">
               <Mic2 size={16} className="text-gold" /> Podcast Script
             </h3>
