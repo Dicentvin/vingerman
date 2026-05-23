@@ -4,20 +4,43 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { evaluatePronunciation } from '../store/slices/pronounceSlice'
 import { Mic, Square, Volume2, RotateCcw, Star } from 'lucide-react'
 
-// Extend window type for cross-browser Speech Recognition
+// ── Cross-browser Speech Recognition types ──────────────────────────────────
+interface ISpeechRecognitionResult {
+  readonly isFinal: boolean
+  readonly length: number
+  [index: number]: { transcript: string; confidence: number }
+}
+
+interface ISpeechRecognitionResultList {
+  readonly length: number
+  readonly resultIndex: number
+  readonly results: ISpeechRecognitionResult[]
+  [index: number]: ISpeechRecognitionResult
+}
+
+interface ISpeechRecognitionEvent extends Event {
+  readonly resultIndex: number
+  readonly results: ISpeechRecognitionResultList
+}
+
+interface ISpeechRecognitionErrorEvent extends Event {
+  readonly error: string
+  readonly message: string
+}
+
 interface ISpeechRecognition extends EventTarget {
   lang: string
   continuous: boolean
   interimResults: boolean
   start(): void
   stop(): void
-  onresult: ((e: SpeechRecognitionEvent) => void) | null
-  onerror: ((e: SpeechRecognitionErrorEvent) => void) | null
+  onresult: ((e: ISpeechRecognitionEvent) => void) | null
+  onerror: ((e: ISpeechRecognitionErrorEvent) => void) | null
   onend: (() => void) | null
 }
 
 interface ISpeechRecognitionConstructor {
-  new (): ISpeechRecognition
+  new(): ISpeechRecognition
 }
 
 declare global {
@@ -26,14 +49,15 @@ declare global {
     webkitSpeechRecognition?: ISpeechRecognitionConstructor
   }
 }
+// ────────────────────────────────────────────────────────────────────────────
 
 const DAILY_PHRASES = [
   { de: 'Ich heiße…',                   en: 'My name is…',              ipa: '[ikh HY-seh]' },
   { de: 'Woher kommen Sie?',            en: 'Where are you from?',      ipa: '[vo-HAIR KOM-en zee]' },
   { de: 'Ich komme aus Nigeria',        en: 'I come from Nigeria',      ipa: '[ikh KOM-eh ows nee-GAIR-ee-ah]' },
-  { de: 'Auf Wiedersehen',             en: 'Goodbye',                   ipa: '[owf VEE-der-zayn]' },
+  { de: 'Auf Wiedersehen',              en: 'Goodbye',                  ipa: '[owf VEE-der-zayn]' },
   { de: 'Bitte sprechen Sie langsamer', en: 'Please speak more slowly', ipa: '[BIT-eh SHPREKH-en zee LANG-zah-mer]' },
-  { de: 'Können Sie das wiederholen?', en: 'Can you repeat that?',      ipa: '[KER-nen zee das VEE-der-HOH-len]' },
+  { de: 'Können Sie das wiederholen?',  en: 'Can you repeat that?',     ipa: '[KER-nen zee das VEE-der-HOH-len]' },
 ]
 
 export default function CoachPage() {
@@ -62,7 +86,7 @@ export default function CoachPage() {
     recognition.interimResults = true
 
     let finalText = ''
-    recognition.onresult = (e: SpeechRecognitionEvent) => {
+    recognition.onresult = (e: ISpeechRecognitionEvent) => {
       let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) finalText += e.results[i][0].transcript
@@ -70,7 +94,7 @@ export default function CoachPage() {
       }
       setSpoken(finalText + interim)
     }
-    recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (e: ISpeechRecognitionErrorEvent) => {
       toast.error('Microphone error: ' + e.error)
       stopRecording()
     }
