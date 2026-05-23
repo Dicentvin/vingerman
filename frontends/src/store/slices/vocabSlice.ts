@@ -90,7 +90,7 @@ const vocabSlice = createSlice({
           const word = list.words.find(w => w._id === action.payload.word._id)
           if (word) word.mastered = action.payload.word.mastered
         }
-        if (state.currentList && state.currentList._id === action.payload.listId) {
+        if (state.currentList?._id === action.payload.listId) {
           const word = state.currentList.words.find(w => w._id === action.payload.word._id)
           if (word) word.mastered = action.payload.word.mastered
         }

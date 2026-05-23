@@ -14,13 +14,13 @@ export default function TranslatePage() {
   const handleTranslate = async () => {
     if (!text.trim()) return toast.error('Please enter text to translate')
     const result = await dispatch(translateText({ text, direction }))
-    if ('error' in result) toast.error(String(result.payload))
+    if (result.error) toast.error(String(result.payload))
   }
 
   const handleGrammar = async () => {
     if (!text.trim()) return toast.error('Please enter German text first')
     const result = await dispatch(explainGrammar({ text }))
-    if ('error' in result) toast.error(String(result.payload))
+    if (result.error) toast.error(String(result.payload))
   }
 
   const speakText = (t: string, lang: string) => {

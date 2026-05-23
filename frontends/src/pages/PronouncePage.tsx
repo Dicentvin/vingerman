@@ -35,7 +35,7 @@ export default function PronouncePage() {
   const handleTeach = async () => {
     if (!word.trim()) return toast.error('Enter a German word or phrase')
     const result = await dispatch(teachPronunciation({ word }))
-    if ('error' in result) toast.error(String(result.payload))
+    if (result.error) toast.error(String(result.payload))
   }
 
   const speak = (text: string) => {

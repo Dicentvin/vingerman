@@ -29,7 +29,7 @@ export default function VocabPage() {
   const handleGenerate = async () => {
     const topic = customTopic.trim() || selectedTopic
     const result = await dispatch(generateVocabList({ topic, count: 12 }))
-    if ('error' in result) toast.error(String(result.payload))
+    if (result.error) toast.error(String(result.payload))
     else toast.success(`12 words generated for "${topic}" ✅`)
     setCustomTopic('')
   }
@@ -52,8 +52,8 @@ export default function VocabPage() {
     speechSynthesis.speak(u)
   }
 
-  const masteredCount = currentList?.words?.filter(w => w.mastered).length ?? 0
-  const totalCount = currentList?.words?.length ?? 0
+  const masteredCount = currentList?.words?.filter(w => w.mastered).length || 0
+  const totalCount = currentList?.words?.length || 0
 
   return (
     <div className="p-8 max-w-4xl mx-auto animate-fade-in">

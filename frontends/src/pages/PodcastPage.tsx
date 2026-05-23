@@ -24,7 +24,7 @@ export default function PodcastPage() {
     fd.append('file', file)
     fd.append('title', file.name.replace(/\.[^/.]+$/, ''))
     const result = await dispatch(uploadMaterial(fd))
-    if (!('error' in result)) {
+    if (!result.error) {
       toast.success('File uploaded ✅')
       setSelectedMat((result.payload as { material: { _id: string } }).material._id)
     }
@@ -39,7 +39,7 @@ export default function PodcastPage() {
       style,
       customText: customText || undefined,
     }))
-    if (!('error' in result)) toast.success('Podcast script ready! 🎙️')
+    if (!result.error) toast.success('Podcast script ready! 🎙️')
   }
 
   const handleSpeak = () => {
