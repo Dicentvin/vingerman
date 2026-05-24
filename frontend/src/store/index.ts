@@ -4,6 +4,7 @@ import podcastReducer from './slices/podcastSlice'
 import translateReducer from './slices/translateSlice'
 import pronounceReducer from './slices/pronounceSlice'
 import vocabReducer from './slices/vocabSlice'
+import examReducer from './slices/examSlice'
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     translate: translateReducer,
     pronounce: pronounceReducer,
     vocab: vocabReducer,
+    exam: examReducer,
   },
 })
 

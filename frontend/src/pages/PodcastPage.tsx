@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { generatePodcast, uploadMaterial, fetchMaterials, setStyle } from '../store/slices/podcastSlice'
@@ -8,9 +9,10 @@ const styles = ['educational', 'conversational', 'storytelling']
 
 export default function PodcastPage() {
   const dispatch = useAppDispatch()
+  const [searchParams] = useSearchParams()
   const { script, style, materials, loading, uploading, error } = useAppSelector(s => s.podcast)
   const [customText, setCustomText] = useState('')
-  const [selectedMat, setSelectedMat] = useState('')
+  const [selectedMat, setSelectedMat] = useState(searchParams.get('material') || '')
   const [speaking, setSpeaking] = useState(false)
   const [dragover, setDragover] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)

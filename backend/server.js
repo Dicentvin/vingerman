@@ -17,6 +17,7 @@ import translateRoutes from './routes/translateRoutes.js';
 import pronounceRoutes from './routes/pronounceRoutes.js';
 import vocabRoutes    from './routes/vocabRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
+import examRoutes from './routes/examRoutes.js';
 
 
 
@@ -52,6 +53,7 @@ app.use('/api/translate', translateRoutes);
 app.use('/api/pronounce', pronounceRoutes);
 app.use('/api/vocab',     vocabRoutes);
 app.use('/api/progress',  progressRoutes);
+app.use('/api/exam',      examRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

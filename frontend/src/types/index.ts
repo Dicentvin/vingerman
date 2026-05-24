@@ -102,7 +102,48 @@ export interface TranslateState {
   error: string | null
 }
 
-// ─── RootState ───────────────────────────────────────────────────────────────
+
+
+// ─── Exam ─────────────────────────────────────────────────────────────────────
+
+export interface ExamQuestion {
+  _id: string
+  type: 'mcq' | 'fill' | 'translate' | 'speaking' | 'writing' | 'listening'
+  question: string
+  options: string[]
+  correctAnswer: string
+  explanation: string
+  userAnswer: string
+  isCorrect: boolean | null
+  score: number | null
+  aiFeedback: string
+}
+
+export interface ExamSession {
+  _id: string
+  examLevel: string
+  section: string
+  questions: ExamQuestion[]
+  totalScore: number
+  maxScore: number
+  passed: boolean
+  completedAt?: string
+  timeSpentSeconds?: number
+}
+
+export interface ExamState {
+  currentSession: ExamSession | null
+  history: ExamSession[]
+  studyGuide: string
+  studyGuideLevel: string
+  studyGuideSection: string
+  conversationHistory: { role: 'user' | 'assistant'; content: string }[]
+  generating: boolean
+  submitting: boolean
+  loadingGuide: boolean
+  loadingConversation: boolean
+  error: string | null
+}
 
 export interface RootState {
   auth: AuthState
@@ -110,4 +151,5 @@ export interface RootState {
   podcast: PodcastState
   pronounce: PronounceState
   translate: TranslateState
+  exam: ExamState
 }
