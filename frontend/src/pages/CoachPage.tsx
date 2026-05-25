@@ -4,60 +4,13 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { evaluatePronunciation } from '../store/slices/pronounceSlice'
 import { Mic, Square, Volume2, RotateCcw, Star } from 'lucide-react'
 
-// ── Cross-browser Speech Recognition types ──────────────────────────────────
-interface ISpeechRecognitionResult {
-  readonly isFinal: boolean
-  readonly length: number
-  [index: number]: { transcript: string; confidence: number }
-}
-
-interface ISpeechRecognitionResultList {
-  readonly length: number
-  readonly resultIndex: number
-  readonly results: ISpeechRecognitionResult[]
-  [index: number]: ISpeechRecognitionResult
-}
-
-interface ISpeechRecognitionEvent extends Event {
-  readonly resultIndex: number
-  readonly results: ISpeechRecognitionResultList
-}
-
-interface ISpeechRecognitionErrorEvent extends Event {
-  readonly error: string
-  readonly message: string
-}
-
-interface ISpeechRecognition extends EventTarget {
-  lang: string
-  continuous: boolean
-  interimResults: boolean
-  start(): void
-  stop(): void
-  onresult: ((e: ISpeechRecognitionEvent) => void) | null
-  onerror: ((e: ISpeechRecognitionErrorEvent) => void) | null
-  onend: (() => void) | null
-}
-
-interface ISpeechRecognitionConstructor {
-  new(): ISpeechRecognition
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: ISpeechRecognitionConstructor
-    webkitSpeechRecognition?: ISpeechRecognitionConstructor
-  }
-}
-// ────────────────────────────────────────────────────────────────────────────
-
 const DAILY_PHRASES = [
-  { de: 'Ich heiße…',                   en: 'My name is…',              ipa: '[ikh HY-seh]' },
-  { de: 'Woher kommen Sie?',            en: 'Where are you from?',      ipa: '[vo-HAIR KOM-en zee]' },
-  { de: 'Ich komme aus Nigeria',        en: 'I come from Nigeria',      ipa: '[ikh KOM-eh ows nee-GAIR-ee-ah]' },
-  { de: 'Auf Wiedersehen',              en: 'Goodbye',                  ipa: '[owf VEE-der-zayn]' },
+  { de: 'Ich heiße…',                   en: 'My name is…',            ipa: '[ikh HY-seh]' },
+  { de: 'Woher kommen Sie?',            en: 'Where are you from?',    ipa: '[vo-HAIR KOM-en zee]' },
+  { de: 'Ich komme aus Nigeria',        en: 'I come from Nigeria',    ipa: '[ikh KOM-eh ows nee-GAIR-ee-ah]' },
+  { de: 'Auf Wiedersehen',             en: 'Goodbye',                 ipa: '[owf VEE-der-zayn]' },
   { de: 'Bitte sprechen Sie langsamer', en: 'Please speak more slowly', ipa: '[BIT-eh SHPREKH-en zee LANG-zah-mer]' },
-  { de: 'Können Sie das wiederholen?',  en: 'Can you repeat that?',     ipa: '[KER-nen zee das VEE-der-HOH-len]' },
+  { de: 'Können Sie das wiederholen?', en: 'Can you repeat that?',    ipa: '[KER-nen zee das VEE-der-HOH-len]' },
 ]
 
 export default function CoachPage() {
@@ -67,7 +20,7 @@ export default function CoachPage() {
   const [target, setTarget] = useState('Guten Morgen, wie geht es Ihnen?')
   const [spoken, setSpoken] = useState('')
   const [isRecording, setIsRecording] = useState(false)
-  const recognitionRef = useRef<ISpeechRecognition | null>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   const speak = (text: string) => {
     speechSynthesis.cancel()
@@ -77,7 +30,7 @@ export default function CoachPage() {
   }
 
   const startRecording = () => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    const SR = window.SpeechRecognition || (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition
     if (!SR) return toast.error('Speech recognition not supported. Use Google Chrome.')
 
     const recognition = new SR()
@@ -86,7 +39,7 @@ export default function CoachPage() {
     recognition.interimResults = true
 
     let finalText = ''
-    recognition.onresult = (e: ISpeechRecognitionEvent) => {
+    recognition.onresult = (e: SpeechRecognitionEvent) => {
       let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) finalText += e.results[i][0].transcript
@@ -94,7 +47,7 @@ export default function CoachPage() {
       }
       setSpoken(finalText + interim)
     }
-    recognition.onerror = (e: ISpeechRecognitionErrorEvent) => {
+    recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
       toast.error('Microphone error: ' + e.error)
       stopRecording()
     }
@@ -114,7 +67,7 @@ export default function CoachPage() {
   const handleEvaluate = async () => {
     if (!spoken.trim()) return toast.error('Record yourself first')
     const result = await dispatch(evaluatePronunciation({ targetPhrase: target, spokenText: spoken }))
-    if ('error' in result) toast.error(String(result.payload))
+    if (result.error) toast.error(String(result.payload))
   }
 
   const handleClear = () => {
@@ -127,9 +80,9 @@ export default function CoachPage() {
     : ''
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-3xl mx-auto animate-fade-in">
-      <div className="mb-5 md:mb-6">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Speaking Coach</h1>
+    <div className="p-8 max-w-3xl mx-auto animate-fade-in">
+      <div className="mb-6">
+        <h1 className="font-display text-3xl text-gray-100">Speaking Coach</h1>
         <p className="text-gray-500 text-sm mt-1">Record yourself speaking German and get AI feedback</p>
       </div>
 
@@ -137,12 +90,12 @@ export default function CoachPage() {
         <label className="section-label">Target Phrase</label>
         <div className="flex gap-2">
           <input
-            className="input flex-1 min-w-0"
+            className="input flex-1"
             value={target}
             onChange={e => setTarget(e.target.value)}
             placeholder="Enter a German phrase to practice…"
           />
-          <button onClick={() => speak(target)} className="btn-secondary px-3 shrink-0" title="Hear correct pronunciation">
+          <button onClick={() => speak(target)} className="btn-secondary px-3" title="Hear correct pronunciation">
             <Volume2 size={16} />
           </button>
         </div>
@@ -151,7 +104,7 @@ export default function CoachPage() {
       <div className="card mb-4 text-center">
         <button
           onClick={isRecording ? stopRecording : startRecording}
-          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto mb-3 flex items-center justify-center
+          className={`w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center
             border-2 transition-all
             ${isRecording
               ? 'bg-red-500/10 border-red-500 animate-pulse-ring'
@@ -159,28 +112,27 @@ export default function CoachPage() {
             }`}
         >
           {isRecording
-            ? <Square size={24} className="text-red-400" />
-            : <Mic size={24} className="text-gray-400" />
+            ? <Square size={28} className="text-red-400" />
+            : <Mic size={28} className="text-gray-400" />
           }
         </button>
         <p className="text-sm text-gray-500 mb-3">
           {isRecording ? '🔴 Recording — speak your German phrase…' : 'Tap to start recording'}
         </p>
 
-        <div className="bg-ink-800 rounded-xl p-4 min-h-[56px] text-sm text-left">
+        <div className="bg-ink-800 rounded-xl p-4 min-h-[60px] text-sm text-left">
           {spoken
             ? <span className="text-gray-200 italic">"{spoken}"</span>
             : <span className="text-gray-600">Your speech will appear here…</span>
           }
         </div>
 
-        <div className="flex gap-2 justify-center mt-4 flex-wrap">
-          <button onClick={handleEvaluate} className="btn-primary flex-1 sm:flex-none justify-center" disabled={evalLoading || !spoken}>
+        <div className="flex gap-2 justify-center mt-4">
+          <button onClick={handleEvaluate} className="btn-primary" disabled={evalLoading || !spoken}>
             {evalLoading ? <span className="spinner" /> : <Star size={15} />}
-            <span className="hidden sm:inline">Evaluate My Pronunciation</span>
-            <span className="sm:hidden">Evaluate</span>
+            Evaluate My Pronunciation
           </button>
-          <button onClick={handleClear} className="btn-secondary shrink-0">
+          <button onClick={handleClear} className="btn-secondary">
             <RotateCcw size={14} /> Clear
           </button>
         </div>
@@ -212,13 +164,13 @@ export default function CoachPage() {
                          cursor-pointer hover:bg-ink-800 rounded-lg px-2 -mx-2 transition-all group"
               onClick={() => setTarget(p.de)}
             >
-              <div className="flex-1 min-w-0">
+              <div className="flex-1">
                 <p className="text-sm font-medium text-gray-200 group-hover:text-gold transition-colors">{p.de}</p>
-                <p className="text-xs text-gray-500 truncate">{p.en} <span className="text-violet-soft">{p.ipa}</span></p>
+                <p className="text-xs text-gray-500">{p.en} <span className="text-violet-soft">{p.ipa}</span></p>
               </div>
               <button
                 onClick={e => { e.stopPropagation(); speak(p.de) }}
-                className="btn-ghost px-2 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                className="btn-ghost px-2 opacity-0 group-hover:opacity-100"
               >
                 <Volume2 size={13} />
               </button>

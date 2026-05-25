@@ -58,6 +58,7 @@ export interface Material {
   cloudinaryUrl: string
   fileSize: number
   createdAt: string
+  hasText?: boolean   // true when text has been extracted and cached
 }
 
 export interface PodcastState {
@@ -102,48 +103,35 @@ export interface TranslateState {
   error: string | null
 }
 
+// ─── ReadAloud ────────────────────────────────────────────────────────────────
 
-
-// ─── Exam ─────────────────────────────────────────────────────────────────────
-
-export interface ExamQuestion {
-  _id: string
-  type: 'mcq' | 'fill' | 'translate' | 'speaking' | 'writing' | 'listening'
-  question: string
-  options: string[]
-  correctAnswer: string
-  explanation: string
-  userAnswer: string
-  isCorrect: boolean | null
-  score: number | null
-  aiFeedback: string
+export interface ReadingGlossaryItem {
+  de: string
+  en: string
+  ipa?: string
 }
 
-export interface ExamSession {
-  _id: string
-  examLevel: string
-  section: string
-  questions: ExamQuestion[]
-  totalScore: number
-  maxScore: number
-  passed: boolean
-  completedAt?: string
-  timeSpentSeconds?: number
+export interface ReadingSegment {
+  text: string
+  note?: string
 }
 
-export interface ExamState {
-  currentSession: ExamSession | null
-  history: ExamSession[]
-  studyGuide: string
-  studyGuideLevel: string
-  studyGuideSection: string
-  conversationHistory: { role: 'user' | 'assistant'; content: string }[]
-  generating: boolean
-  submitting: boolean
-  loadingGuide: boolean
-  loadingConversation: boolean
+export interface ReadingContent {
+  title: string
+  level: string
+  segments: ReadingSegment[]
+  fullText: string
+  glossary: ReadingGlossaryItem[]
+}
+
+export interface ReadAloudState {
+  content: ReadingContent | null
+  loading: boolean
   error: string | null
+  history: { id: string; title: string; level: string; createdAt: string }[]
 }
+
+// ─── RootState ───────────────────────────────────────────────────────────────
 
 export interface RootState {
   auth: AuthState
@@ -151,5 +139,4 @@ export interface RootState {
   podcast: PodcastState
   pronounce: PronounceState
   translate: TranslateState
-  exam: ExamState
 }

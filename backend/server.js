@@ -1,11 +1,8 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-
+import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 
@@ -17,9 +14,9 @@ import translateRoutes from './routes/translateRoutes.js';
 import pronounceRoutes from './routes/pronounceRoutes.js';
 import vocabRoutes    from './routes/vocabRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
-import examRoutes from './routes/examRoutes.js';
+import readAloudRoutes from './routes/readAloudRoutes.js';
 
-
+dotenv.config();
 
 // Connect to MongoDB
 connectDB();
@@ -28,13 +25,9 @@ const app = express();
 
 app.use(helmet());
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    process.env.CLIENT_URL,
-  ].filter(Boolean),
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
-}))
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -52,8 +45,8 @@ app.use('/api/podcast',   podcastRoutes);
 app.use('/api/translate', translateRoutes);
 app.use('/api/pronounce', pronounceRoutes);
 app.use('/api/vocab',     vocabRoutes);
-app.use('/api/progress',  progressRoutes);
-app.use('/api/exam',      examRoutes);
+app.use('/api/progress',   progressRoutes);
+app.use('/api/readaloud', readAloudRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -30,7 +30,7 @@ export default function AuthPage({ mode }: Props) {
       ? loginUser({ email: form.email, password: form.password })
       : registerUser(form)
     const result = await dispatch(action)
-    if (!('error' in result)) {
+    if (!result.error) {
       toast.success(isLogin ? 'Welcome back! 🎉' : 'Account created — Viel Erfolg! 🇩🇪')
     }
   }
