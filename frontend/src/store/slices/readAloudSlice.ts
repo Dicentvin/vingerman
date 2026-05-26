@@ -3,7 +3,8 @@ import api from '../../utils/api'
 
 export interface ReadingSegment {
   text: string
-  note?: string        // grammar/cultural tip for this segment
+  translation: string   // English translation of this segment
+  note?: string         // grammar/cultural tip
   isHighlighted?: boolean
 }
 

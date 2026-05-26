@@ -1,13 +1,11 @@
-// config/groq.js
 import Groq from 'groq-sdk';
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const MODEL = 'llama-3.3-70b-versatile';
 
-// ✅ Create client lazily so dotenv has already run
-const getGroq = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
-
 export const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groq.chat.completions.create({
     model: MODEL,
     max_tokens: maxTokens,
     temperature: 0.7,
@@ -22,7 +20,7 @@ export const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
 };
 
 export const callGroqJSON = async (systemPrompt, userPrompt) => {
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groq.chat.completions.create({
     model: MODEL,
     max_tokens: 1500,
     temperature: 0.4,
@@ -42,4 +40,4 @@ export const callGroqJSON = async (systemPrompt, userPrompt) => {
   }
 };
 
-export default getGroq;
+export default groq;

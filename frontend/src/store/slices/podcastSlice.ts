@@ -43,6 +43,19 @@ export const uploadMaterial = createAsyncThunk(
   }
 )
 
+export const deleteMaterial = createAsyncThunk(
+  'podcast/deleteMaterial',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await api.delete(`/upload/${id}`)
+      return id
+    } catch (err: unknown) {
+      const e = err as { message?: string }
+      return rejectWithValue(e?.message || 'Delete failed')
+    }
+  }
+)
+
 const initialState: PodcastState = {
   script: '',
   style: 'educational',
@@ -57,21 +70,22 @@ const podcastSlice = createSlice({
   name: 'podcast',
   initialState,
   reducers: {
-    setStyle: (state, action: PayloadAction<string>) => { state.style = action.payload },
+    setStyle:    (state, action: PayloadAction<string>) => { state.style = action.payload },
     clearScript: (state) => { state.script = '' },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(generatePodcast.pending, (state) => { state.loading = true; state.error = null })
+      .addCase(generatePodcast.pending,   (state) => { state.loading = true; state.error = null })
       .addCase(generatePodcast.fulfilled, (state, action) => {
         state.loading = false
-        state.script = action.payload.script
+        state.script  = action.payload.script
       })
       .addCase(generatePodcast.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload as string
+        state.error   = action.payload as string
       })
-      .addCase(uploadMaterial.pending, (state) => { state.uploading = true })
+
+      .addCase(uploadMaterial.pending,   (state) => { state.uploading = true })
       .addCase(uploadMaterial.fulfilled, (state, action) => {
         state.uploading = false
         state.materials.unshift(action.payload.material)
@@ -81,8 +95,16 @@ const podcastSlice = createSlice({
         state.uploading = false
         state.error = action.payload as string
       })
+
       .addCase(fetchMaterials.fulfilled, (state, action) => {
         state.materials = action.payload.materials
+      })
+
+      .addCase(deleteMaterial.fulfilled, (state, action) => {
+        state.materials = state.materials.filter(m => m._id !== action.payload)
+        if (state.selectedMaterial?._id === action.payload) {
+          state.selectedMaterial = null
+        }
       })
   },
 })

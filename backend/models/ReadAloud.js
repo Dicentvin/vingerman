@@ -7,8 +7,9 @@ const glossaryItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const segmentSchema = new mongoose.Schema({
-  text: { type: String, required: true },
-  note: { type: String },
+  text:        { type: String, required: true },
+  translation: { type: String, default: '' },   // English translation of this segment
+  note:        { type: String },
 }, { _id: false });
 
 const readAloudSchema = new mongoose.Schema(
