@@ -318,6 +318,7 @@ export default function ReadAloudPage() {
             title={content.title}
             selectedVoice={selectedVoice}
             currentMode={currentMode}
+            glossary={content.glossary}
             onExit={() => setViewMode('reader')}
           />
         )}

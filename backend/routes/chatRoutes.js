@@ -1,0 +1,10 @@
+import express from 'express';
+import { startConversation, sendMessage, getSessions, getSession } from '../controllers/chatController.js';
+import { protect } from '../middleware/authMiddleware.js';
+const router = express.Router();
+router.use(protect);
+router.post('/start',          startConversation);
+router.post('/message',        sendMessage);
+router.get('/sessions',        getSessions);
+router.get('/sessions/:id',    getSession);
+export default router;

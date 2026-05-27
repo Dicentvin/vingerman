@@ -1,22 +1,30 @@
 import { configureStore } from '@reduxjs/toolkit'
-import authReducer from './slices/authSlice'
-import podcastReducer from './slices/podcastSlice'
-import translateReducer from './slices/translateSlice'
-import pronounceReducer from './slices/pronounceSlice'
-import vocabReducer from './slices/vocabSlice'
-import readAloudReducer from './slices/readAloudSlice'
+import authReducer       from './slices/authSlice'
+import podcastReducer    from './slices/podcastSlice'
+import translateReducer  from './slices/translateSlice'
+import pronounceReducer  from './slices/pronounceSlice'
+import vocabReducer      from './slices/vocabSlice'
+import readAloudReducer  from './slices/readAloudSlice'
+import writingReducer    from './slices/writingSlice'
+import flashcardReducer  from './slices/flashcardSlice'
+import chatReducer       from './slices/chatSlice'
+import challengeReducer  from './slices/challengeSlice'
 
 export const store = configureStore({
   reducer: {
-    auth: authReducer,
-    podcast: podcastReducer,
-    translate: translateReducer,
-    pronounce: pronounceReducer,
-    vocab: vocabReducer,
-    readAloud: readAloudReducer,
+    auth:       authReducer,
+    podcast:    podcastReducer,
+    translate:  translateReducer,
+    pronounce:  pronounceReducer,
+    vocab:      vocabReducer,
+    readAloud:  readAloudReducer,
+    writing:    writingReducer,
+    flashcard:  flashcardReducer,
+    chat:       chatReducer,
+    challenge:  challengeReducer,
   },
 })
 
-export type AppDispatch = typeof store.dispatch
-export type AppRootState = ReturnType<typeof store.getState>
+export type AppDispatch    = typeof store.dispatch
+export type AppRootState   = ReturnType<typeof store.getState>
 export default store
