@@ -6,8 +6,8 @@ import {
   LayoutDashboard, Mic2, Languages, Volume2, Mic, BookOpen,
   LogOut, Flame, Headphones, PenLine, CreditCard,
   MessageSquare, Trophy, Menu, X, GraduationCap,
-} from 'lucide-react'
-
+  FolderOpen, Award, ClipboardList,
+} 
 const navItems = [
   { to: '/',           icon: LayoutDashboard, label: 'Dashboard',       end: true },
   { to: '/podcast',    icon: Mic2,            label: 'File to Podcast'  },
