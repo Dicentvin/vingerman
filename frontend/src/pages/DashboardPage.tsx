@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAppSelector } from '../hooks/redux'
-import { Mic2, Languages, Volume2, Mic, BookOpen, Flame, Star, Zap, Headphones, PenLine, CreditCard, MessageSquare, Trophy } from 'lucide-react'
+import { Mic2, Languages, Volume2, Mic, BookOpen, Flame, Star, Zap, Headphones, PenLine, CreditCard, MessageSquare, Trophy, FolderOpen, Award, ClipboardList } from 'lucide-react'
 
 const features = [
   { to: '/podcast',    icon: Mic2,          label: 'File to Podcast',    desc: 'Convert PDFs & slides to audio',         color: 'text-gold',        bg: 'bg-gold/10' },
@@ -13,6 +13,9 @@ const features = [
   { to: '/flashcards', icon: CreditCard,    label: 'Flashcards',          desc: 'Spaced repetition drills',               color: 'text-cyan-400',    bg: 'bg-cyan-500/10' },
   { to: '/chat',       icon: MessageSquare, label: 'Conversation',        desc: 'Chat with an AI German tutor',           color: 'text-indigo-400',  bg: 'bg-indigo-500/10' },
   { to: '/challenge',  icon: Trophy,        label: 'Daily Challenge',     desc: 'Earn XP & climb the leaderboard',       color: 'text-yellow-400',  bg: 'bg-yellow-500/10' },
+  { to: '/materials',  icon: FolderOpen,    label: 'My Materials',        desc: 'Manage uploaded PDFs, PPTX & DOCX',     color: 'text-rose-400',    bg: 'bg-rose-500/10' },
+  { to: '/syllabus',      icon: Award,          label: 'Goethe Prep A1/A2',   desc: 'Structured syllabus with progress tracking', color: 'text-amber-400',   bg: 'bg-amber-500/10' },
+  { to: '/exam-practice', icon: ClipboardList,  label: 'Exam Practice',       desc: 'Hören · Lesen · Schreiben · Sprechen drills', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
 ]
 
 export default function DashboardPage() {

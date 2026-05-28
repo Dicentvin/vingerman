@@ -20,6 +20,9 @@ const navItems = [
   { to: '/flashcards', icon: CreditCard,      label: 'Flashcards'       },
   { to: '/chat',       icon: MessageSquare,   label: 'Conversation'     },
   { to: '/challenge',  icon: Trophy,          label: 'Daily Challenge'  },
+  { to: '/materials',  icon: FolderOpen,      label: 'My Materials'     },
+  { to: '/syllabus',      icon: Award,          label: 'Goethe Prep A1/A2' },
+  { to: '/exam-practice', icon: ClipboardList,   label: 'Exam Practice'     },
 ]
 
 export default function Layout() {

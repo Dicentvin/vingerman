@@ -19,6 +19,7 @@ import VoiceSelector from '../components/reader/VoiceSelector'
 import ReadingDisplay from '../components/reader/ReadingDisplay'
 import PlaybackControls from '../components/reader/PlaybackControls'
 import TutorSession from '../components/reader/TutorSession'
+import api from '../utils/api'
 import type { Material } from '../types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -457,10 +458,11 @@ export default function ReadAloudPage() {
                                 </p>
                               </div>
                             </div>
+                            {/* Status messages */}
                             {!mat.hasText && !isExtracting && (
                               <div className="flex items-center gap-1.5 mt-2 text-[10px] text-amber-500/80">
                                 <FileWarning size={11} />
-                                Text not yet extracted — click Load to trigger
+                                Click Load — text will be extracted from your file
                               </div>
                             )}
                             <div className="flex gap-1.5 mt-2.5">
@@ -501,7 +503,7 @@ export default function ReadAloudPage() {
                   )}
                 </div>
                 <p className="text-[10px] text-gray-700 leading-relaxed border-t border-white/[0.05] pt-2">
-                  Supports PDF, PPTX, DOCX & TXT. Scanned/image PDFs cannot be extracted.
+                  Supports PDF (text-based), PPTX, DOCX & TXT. Scanned/image PDFs cannot be read — use Paste Text instead.
                 </p>
               </div>
             )}

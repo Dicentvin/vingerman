@@ -3,287 +3,296 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { fetchMaterials, uploadMaterial, deleteMaterial } from '../store/slices/podcastSlice'
+import api from '../utils/api'
 import {
-  Upload, FileText, File, Trash2, BookOpen, Mic2, ExternalLink,
-  CloudUpload, Search, ChevronDown, ChevronUp, Calendar, HardDrive,
+  Upload, FileText, Trash2, Mic2, Headphones,
+  RefreshCw, CheckCircle2, AlertCircle, Loader2,
+  FileWarning, Info,
 } from 'lucide-react'
+import type { Material } from '../types'
 
-const FILE_ICONS: Record<string, React.ElementType> = {
-  pdf: FileText,
-  txt: FileText,
-  docx: File,
-  pptx: File,
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const FILE_ICONS: Record<string, string> = {
+  pdf: '📄', pptx: '📊', docx: '📝', doc: '📝', txt: '📃',
+}
+const FORMAT_COLORS: Record<string, string> = {
+  pdf:  'bg-red-500/10 text-red-400 border-red-400/20',
+  pptx: 'bg-orange-500/10 text-orange-400 border-orange-400/20',
+  docx: 'bg-blue-500/10 text-blue-400 border-blue-400/20',
+  doc:  'bg-blue-500/10 text-blue-400 border-blue-400/20',
+  txt:  'bg-gray-500/10 text-gray-400 border-gray-400/20',
 }
 
-const FILE_COLORS: Record<string, string> = {
-  pdf:  'text-red-400 bg-red-500/10',
-  txt:  'text-blue-400 bg-blue-500/10',
-  docx: 'text-blue-500 bg-blue-500/10',
-  pptx: 'text-orange-400 bg-orange-500/10',
-}
-
-function formatSize(bytes: number) {
+function fileIcon(type: string)  { return FILE_ICONS[(type||'').toLowerCase()] || '📎' }
+function formatColor(type: string) { return FORMAT_COLORS[(type||'').toLowerCase()] || 'bg-ink-700 text-gray-400 border-white/10' }
+function fileSize(bytes: number) {
   if (!bytes) return '—'
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-}
+const ACCEPTED = '.pdf,.pptx,.docx,.doc,.txt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain'
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MaterialsPage() {
-  const dispatch   = useAppDispatch()
-  const navigate   = useNavigate()
+  const dispatch  = useAppDispatch()
+  const navigate  = useNavigate()
   const { materials, uploading } = useAppSelector(s => s.podcast)
 
-  const fileRef  = useRef<HTMLInputElement>(null)
-  const [dragover, setDragover] = useState(false)
-  const [search,   setSearch]   = useState('')
-  const [sortBy,   setSortBy]   = useState<'date' | 'name' | 'size'>('date')
-  const [sortAsc,  setSortAsc]  = useState(false)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [dragover,     setDragover]     = useState(false)
+  const [deletingId,   setDeletingId]   = useState<string | null>(null)
+  const [extractingId, setExtractingId] = useState<string | null>(null)
+  const [previewId,    setPreviewId]    = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { dispatch(fetchMaterials()) }, [dispatch])
 
-  const handleUpload = async (file: File | null | undefined) => {
-    if (!file) return
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('title', file.name.replace(/\.[^/.]+$/, ''))
-    const result = await dispatch(uploadMaterial(fd))
-    if (!('error' in result)) toast.success(`"${file.name}" uploaded ✅`)
-    else toast.error(String((result as any).payload))
+  // ── Upload ──────────────────────────────────────────────────────────────────
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return
+    const allowed = /\.(pdf|pptx|docx|doc|txt)$/i
+
+    for (const file of Array.from(files)) {
+      if (!allowed.test(file.name)) {
+        toast.error(`${file.name} — unsupported format. Use PDF, PPTX, DOCX or TXT.`)
+        continue
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name} is too large. Max file size is 20 MB.`)
+        continue
+      }
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('title', file.name.replace(/\.[^/.]+$/, ''))
+      const result = await dispatch(uploadMaterial(fd))
+      if (!result.error) {
+        toast.success(`"${file.name}" uploaded ✅`)
+      } else {
+        toast.error(`Upload failed: ${result.payload}`)
+      }
+    }
+    dispatch(fetchMaterials())
   }
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return
-    setDeleting(id)
-    const result = await dispatch(deleteMaterial(id))
-    setDeleting(null)
-    if (!('error' in result)) toast.success('Material deleted')
-    else toast.error('Could not delete material')
+  // ── Delete ──────────────────────────────────────────────────────────────────
+
+  const handleDelete = async (mat: Material) => {
+    if (!confirm(`Delete "${mat.title}"? This cannot be undone.`)) return
+    setDeletingId(mat._id)
+    const result = await dispatch(deleteMaterial(mat._id))
+    setDeletingId(null)
+    if (!result.error) toast.success('File deleted')
+    else toast.error('Delete failed')
   }
 
-  // Filter + sort
-  const filtered = materials
-    .filter(m => m.title.toLowerCase().includes(search.toLowerCase()) ||
-                 m.originalName?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      let cmp = 0
-      if (sortBy === 'name') cmp = a.title.localeCompare(b.title)
-      else if (sortBy === 'size') cmp = (a.fileSize || 0) - (b.fileSize || 0)
-      else cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      return sortAsc ? cmp : -cmp
-    })
+  // ── Re-extract text ─────────────────────────────────────────────────────────
 
-  const toggleSort = (col: typeof sortBy) => {
-    if (sortBy === col) setSortAsc(a => !a)
-    else { setSortBy(col); setSortAsc(false) }
+  const handleReextract = async (mat: Material) => {
+    setExtractingId(mat._id)
+    try {
+      const res = await api.post(`/upload/${mat._id}/extract`)
+      if (res.data.success) {
+        toast.success(`Text extracted — ${res.data.length} characters`)
+        dispatch(fetchMaterials())
+      } else {
+        toast.error(res.data.message || 'Extraction failed')
+      }
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } }
+      toast.error(e?.response?.data?.message || 'Extraction failed')
+    }
+    setExtractingId(null)
   }
 
-  const SortIcon = ({ col }: { col: typeof sortBy }) =>
-    sortBy === col
-      ? sortAsc ? <ChevronUp size={12} /> : <ChevronDown size={12} />
-      : <ChevronDown size={12} className="opacity-30" />
+  // ── Stats ───────────────────────────────────────────────────────────────────
+
+  const totalFiles  = materials.length
+  const readyFiles  = materials.filter(m => m.hasText).length
+  const totalSizeKB = materials.reduce((s, m) => s + (m.fileSize || 0), 0) / 1024
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto animate-fade-in">
+
       {/* Header */}
       <div className="mb-6">
         <h1 className="font-display text-2xl sm:text-3xl text-gray-100">My Materials</h1>
-        <p className="text-gray-500 text-sm mt-1">Upload PDF, DOCX, PPTX, or TXT files — then read aloud with AI coaching or convert to a podcast</p>
+        <p className="text-gray-500 text-sm mt-1">
+          Upload PDFs, PowerPoints, Word docs and text files — then read, listen or practise with them
+        </p>
       </div>
 
-      {/* Upload zone */}
-      <div
-        className={`mb-6 border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all
-          ${dragover ? 'border-gold/60 bg-gold/5' : 'border-white/10 hover:border-gold/30 hover:bg-gold/[0.03]'}`}
-        onClick={() => fileRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragover(true) }}
-        onDragLeave={() => setDragover(false)}
-        onDrop={e => { e.preventDefault(); setDragover(false); handleUpload(e.dataTransfer.files[0]) }}
-      >
-        {uploading ? (
-          <div className="flex flex-col items-center gap-3">
-            <span className="spinner w-8 h-8" />
-            <p className="text-gray-400 text-sm">Uploading…</p>
-          </div>
-        ) : (
-          <>
-            <CloudUpload size={32} className="text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-300 font-medium">Drop a file here or <span className="text-gold">browse</span></p>
-            <p className="text-xs text-gray-600 mt-1">PDF · DOCX · PPTX · TXT · max 20 MB</p>
-          </>
-        )}
-        <input ref={fileRef} type="file" accept=".pdf,.pptx,.txt,.docx" className="hidden"
-          onChange={e => handleUpload(e.target.files?.[0])} />
-      </div>
-
-      {/* Search + count */}
-      {materials.length > 0 && (
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <div className="relative flex-1 min-w-[180px] max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input
-              className="input pl-9 py-2 text-sm"
-              placeholder="Search materials…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <span className="text-xs text-gray-500 ml-auto shrink-0">
-            {filtered.length} of {materials.length} file{materials.length !== 1 ? 's' : ''}
-          </span>
+      {/* Stats row */}
+      {totalFiles > 0 && (
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+          {[
+            { label: 'Files',          value: totalFiles,                    color: 'text-gray-100' },
+            { label: 'Text Ready',     value: `${readyFiles}/${totalFiles}`, color: 'text-teal-soft' },
+            { label: 'Storage',        value: `${totalSizeKB < 1024 ? totalSizeKB.toFixed(0) + ' KB' : (totalSizeKB/1024).toFixed(1) + ' MB'}`, color: 'text-gray-400' },
+          ].map(s => (
+            <div key={s.label} className="card-sm text-center">
+              <p className={`font-display text-2xl ${s.color}`}>{s.value}</p>
+              <p className="text-[10px] text-gray-600 mt-0.5">{s.label}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Table */}
-      {filtered.length > 0 ? (
-        <div className="card p-0 overflow-hidden">
-          {/* Desktop table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/[0.07]">
-                  <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase tracking-widest font-medium w-8">Type</th>
-                  <th
-                    className="text-left px-4 py-3 text-xs text-gray-500 uppercase tracking-widest font-medium cursor-pointer hover:text-gray-300 select-none"
-                    onClick={() => toggleSort('name')}
-                  >
-                    <span className="flex items-center gap-1">Name <SortIcon col="name" /></span>
-                  </th>
-                  <th
-                    className="text-left px-4 py-3 text-xs text-gray-500 uppercase tracking-widest font-medium cursor-pointer hover:text-gray-300 select-none"
-                    onClick={() => toggleSort('date')}
-                  >
-                    <span className="flex items-center gap-1">Uploaded <SortIcon col="date" /></span>
-                  </th>
-                  <th
-                    className="text-left px-4 py-3 text-xs text-gray-500 uppercase tracking-widest font-medium cursor-pointer hover:text-gray-300 select-none"
-                    onClick={() => toggleSort('size')}
-                  >
-                    <span className="flex items-center gap-1">Size <SortIcon col="size" /></span>
-                  </th>
-                  <th className="text-right px-5 py-3 text-xs text-gray-500 uppercase tracking-widest font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04]">
-                {filtered.map(m => {
-                  const ext  = m.fileType || m.originalName?.split('.').pop() || 'txt'
-                  const Icon = FILE_ICONS[ext] || File
-                  const colorClass = FILE_COLORS[ext] || 'text-gray-400 bg-gray-500/10'
-                  return (
-                    <tr key={m._id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-5 py-3.5">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${colorClass}`}>
-                          <Icon size={14} />
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <p className="font-medium text-gray-100 truncate max-w-[260px]">{m.title}</p>
-                        {m.originalName && m.originalName !== m.title && (
-                          <p className="text-xs text-gray-600 truncate max-w-[260px]">{m.originalName}</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap">
-                        {formatDate(m.createdAt)}
-                      </td>
-                      <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap">
-                        {formatSize(m.fileSize)}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => navigate(`/read/${m._id}`)}
-                            className="btn-ghost px-2.5 py-1.5 text-xs text-teal-soft hover:text-teal-soft hover:bg-teal-muted"
-                            title="Read Aloud"
-                          >
-                            <BookOpen size={13} /> Read
-                          </button>
-                          <button
-                            onClick={() => navigate(`/podcast?material=${m._id}`)}
-                            className="btn-ghost px-2.5 py-1.5 text-xs text-violet-soft hover:text-violet-soft hover:bg-violet-muted"
-                            title="Generate Podcast"
-                          >
-                            <Mic2 size={13} /> Podcast
-                          </button>
-                          {m.cloudinaryUrl && (
-                            <a
-                              href={m.cloudinaryUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn-ghost px-2 py-1.5"
-                              title="Open file"
-                            >
-                              <ExternalLink size={13} />
-                            </a>
-                          )}
-                          <button
-                            onClick={() => handleDelete(m._id, m.title)}
-                            disabled={deleting === m._id}
-                            className="btn-ghost px-2 py-1.5 text-gray-600 hover:text-red-400"
-                            title="Delete"
-                          >
-                            {deleting === m._id ? <span className="spinner w-3 h-3" /> : <Trash2 size={13} />}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+      {/* Upload zone */}
+      <div
+        className={`card border-dashed border-2 mb-6 cursor-pointer transition-all text-center py-10 sm:py-12
+          ${dragover ? 'border-teal-soft/60 bg-teal-muted' : 'border-white/10 hover:border-gold/30 hover:bg-gold/[0.03]'}`}
+        onClick={() => fileRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragover(true) }}
+        onDragLeave={() => setDragover(false)}
+        onDrop={e => { e.preventDefault(); setDragover(false); handleFiles(e.dataTransfer.files) }}
+      >
+        {uploading ? (
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={36} className="text-gold animate-spin"/>
+            <p className="text-gray-300 font-medium">Uploading…</p>
           </div>
+        ) : (
+          <>
+            <Upload size={36} className="text-gray-600 mx-auto mb-3"/>
+            <p className="text-gray-200 font-medium mb-1">Drop files here or tap to browse</p>
+            <p className="text-gray-500 text-sm">PDF · PPTX · DOCX · TXT — up to 20 MB each</p>
+            <div className="flex justify-center gap-2 mt-4 flex-wrap">
+              {['📄 PDF','📊 PPTX','📝 DOCX','📃 TXT'].map(f => (
+                <span key={f} className="text-xs px-3 py-1.5 bg-ink-800 border border-white/[0.06] rounded-full text-gray-500">{f}</span>
+              ))}
+            </div>
+          </>
+        )}
+        <input ref={fileRef} type="file" multiple accept={ACCEPTED} className="hidden"
+          onChange={e => handleFiles(e.target.files)}/>
+      </div>
 
-          {/* Mobile card list */}
-          <div className="sm:hidden divide-y divide-white/[0.04]">
-            {filtered.map(m => {
-              const ext  = m.fileType || m.originalName?.split('.').pop() || 'txt'
-              const Icon = FILE_ICONS[ext] || File
-              const colorClass = FILE_COLORS[ext] || 'text-gray-400 bg-gray-500/10'
-              return (
-                <div key={m._id} className="p-4 flex items-start gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}>
-                    <Icon size={16} />
-                  </div>
+      {/* Info banner */}
+      <div className="flex gap-2.5 p-3 bg-ink-800 border border-white/[0.06] rounded-xl mb-5 text-xs text-gray-500">
+        <Info size={13} className="text-gold shrink-0 mt-0.5"/>
+        <p>
+          <span className="text-gray-300">Text extraction</span> happens automatically after upload (within seconds).
+          Text-based PDFs and PPTX/DOCX work best. Scanned or image-only PDFs cannot be read — paste the text manually instead.
+        </p>
+      </div>
+
+      {/* File list */}
+      {materials.length === 0 ? (
+        <div className="card text-center py-16">
+          <FileText size={48} className="text-gray-700 mx-auto mb-4"/>
+          <p className="text-gray-400 font-medium mb-1">No files uploaded yet</p>
+          <p className="text-gray-600 text-sm">Upload a PDF, PPTX, DOCX or TXT file to get started</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {materials.map((mat: Material) => {
+            const isDeleting   = deletingId   === mat._id
+            const isExtracting = extractingId === mat._id
+            const isPreview    = previewId    === mat._id
+
+            return (
+              <div key={mat._id}
+                className={`card transition-all ${isDeleting ? 'opacity-50' : ''}`}>
+
+                {/* Top row: icon + title + format badge + status */}
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl shrink-0 mt-0.5">{fileIcon(mat.fileType)}</span>
+
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-100 text-sm truncate">{m.title}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                      <span className="flex items-center gap-1"><Calendar size={10} />{formatDate(m.createdAt)}</span>
-                      <span className="flex items-center gap-1"><HardDrive size={10} />{formatSize(m.fileSize)}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-gray-100 text-sm truncate max-w-[200px] sm:max-w-xs">
+                        {mat.title}
+                      </p>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-mono uppercase ${formatColor(mat.fileType)}`}>
+                        {mat.fileType}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-2.5">
-                      <button onClick={() => navigate(`/read/${m._id}`)}
-                        className="btn-ghost px-2.5 py-1 text-xs text-teal-soft hover:bg-teal-muted">
-                        <BookOpen size={12} /> Read
-                      </button>
-                      <button onClick={() => navigate(`/podcast?material=${m._id}`)}
-                        className="btn-ghost px-2.5 py-1 text-xs text-violet-soft hover:bg-violet-muted">
-                        <Mic2 size={12} /> Podcast
-                      </button>
-                      <button onClick={() => handleDelete(m._id, m.title)}
-                        disabled={deleting === m._id}
-                        className="btn-ghost px-2 py-1 text-gray-600 hover:text-red-400 ml-auto">
-                        {deleting === m._id ? <span className="spinner w-3 h-3" /> : <Trash2 size={12} />}
-                      </button>
+
+                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                      <span className="text-xs text-gray-600">{fileSize(mat.fileSize)}</span>
+                      <span className="text-gray-700">·</span>
+                      <span className="text-xs text-gray-600">
+                        {new Date(mat.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+
+                      {/* Extraction status */}
+                      {mat.hasText ? (
+                        <span className="flex items-center gap-1 text-[10px] text-teal-soft">
+                          <CheckCircle2 size={10}/> Text ready
+                        </span>
+                      ) : isExtracting ? (
+                        <span className="flex items-center gap-1 text-[10px] text-gold animate-pulse">
+                          <Loader2 size={10} className="animate-spin"/> Extracting…
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] text-amber-500/80">
+                          <FileWarning size={10}/> Not extracted
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="card flex flex-col items-center justify-center py-16 text-center">
-          <Upload size={40} className="text-gray-700 mb-3" />
-          <p className="text-gray-400 font-medium">
-            {search ? 'No materials match your search' : 'No materials uploaded yet'}
-          </p>
-          <p className="text-gray-600 text-xs mt-1">
-            {search ? 'Try a different keyword' : 'Upload a PDF, DOCX, PPTX, or TXT to get started'}
-          </p>
+
+                {/* Action buttons */}
+                <div className="flex gap-1.5 mt-3 flex-wrap">
+                  {/* Read Aloud */}
+                  <button
+                    onClick={() => navigate('/read-aloud', { state: { materialId: mat._id } })}
+                    className="btn-secondary flex-1 sm:flex-none text-xs justify-center py-2 gap-1.5 min-w-0">
+                    <Headphones size={13}/> <span className="truncate">Read Aloud</span>
+                  </button>
+
+                  {/* Podcast */}
+                  <button
+                    onClick={() => navigate('/podcast', { state: { materialId: mat._id } })}
+                    className="btn-secondary flex-1 sm:flex-none text-xs justify-center py-2 gap-1.5 min-w-0">
+                    <Mic2 size={13}/> <span className="truncate">Podcast</span>
+                  </button>
+
+                  {/* Re-extract */}
+                  {!mat.hasText && (
+                    <button
+                      onClick={() => handleReextract(mat)}
+                      disabled={!!extractingId}
+                      className="btn-secondary flex-1 sm:flex-none text-xs justify-center py-2 gap-1.5 min-w-0 text-gold border-gold/30 hover:bg-gold/10">
+                      {isExtracting
+                        ? <><Loader2 size={12} className="animate-spin"/> Extracting…</>
+                        : <><RefreshCw size={12}/> Extract text</>}
+                    </button>
+                  )}
+
+                  {/* Delete */}
+                  <button
+                    onClick={() => handleDelete(mat)}
+                    disabled={isDeleting || !!deletingId}
+                    className="btn-secondary sm:flex-none text-xs justify-center py-2 px-3 text-red-400 border-red-400/20 hover:bg-red-500/10">
+                    {isDeleting ? <Loader2 size={13} className="animate-spin"/> : <Trash2 size={13}/>}
+                  </button>
+                </div>
+
+                {/* Extracted text preview (collapsible) */}
+                {mat.hasText && (
+                  <div className="mt-2.5">
+                    <button onClick={() => setPreviewId(isPreview ? null : mat._id)}
+                      className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors flex items-center gap-1">
+                      <AlertCircle size={10}/>
+                      {isPreview ? 'Hide preview' : 'Preview extracted text'}
+                    </button>
+                    {isPreview && (
+                      <div className="mt-2 bg-ink-800 rounded-xl p-3 text-xs text-gray-400 leading-relaxed
+                        max-h-32 overflow-y-auto border border-white/[0.05] font-mono">
+                        {/* We'd need to fetch the full doc — just show a note */}
+                        Text has been extracted and is ready for AI processing. Click "Read Aloud" or "Podcast" to use it.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

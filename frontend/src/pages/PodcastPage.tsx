@@ -61,9 +61,9 @@ export default function PodcastPage() {
         onDragLeave={() => setDragover(false)}
         onDrop={e => { e.preventDefault(); setDragover(false); handleFileUpload(e.dataTransfer.files[0]) }}>
         <Upload size={28} className="text-gray-600 mx-auto mb-3"/>
-        <p className="text-gray-300 font-medium text-sm">{uploading ? 'Uploading…' : 'Drop PDF, PPTX, or TXT here'}</p>
+        <p className="text-gray-300 font-medium text-sm">{uploading ? 'Uploading…' : 'Drop PDF, PPTX, DOCX or TXT here'}</p>
         <p className="text-gray-600 text-xs mt-1">or tap to browse</p>
-        <input ref={fileRef} type="file" accept=".pdf,.pptx,.txt" className="hidden"
+        <input ref={fileRef} type="file" accept=".pdf,.pptx,.docx,.doc,.txt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" className="hidden"
           onChange={e => handleFileUpload(e.target.files?.[0])}/>
       </div>
 

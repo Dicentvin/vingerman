@@ -18,6 +18,8 @@ import writingRoutes   from './routes/writingRoutes.js';
 import flashcardRoutes from './routes/flashcardRoutes.js';
 import chatRoutes      from './routes/chatRoutes.js';
 import challengeRoutes from './routes/challengeRoutes.js';
+import syllabusRoutes  from './routes/syllabusRoutes.js';
+import examPracticeRoutes from './routes/examPracticeRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -44,6 +46,8 @@ app.use('/api/writing',    writingRoutes);
 app.use('/api/flashcard',  flashcardRoutes);
 app.use('/api/chat',       chatRoutes);
 app.use('/api/challenge',  challengeRoutes);
+app.use('/api/syllabus',   syllabusRoutes);
+app.use('/api/exam',       examPracticeRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -51,7 +55,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Deutsch Studio API — port ${PORT}`);
-  console.log(`📦 MongoDB · 🔑 JWT · 🤖 Groq · 12 routes registered`);
+  console.log(`📦 MongoDB · 🔑 JWT · 🤖 Groq · 14 routes registered`);
 });
 
 export default app;
