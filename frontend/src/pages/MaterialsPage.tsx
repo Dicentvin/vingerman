@@ -118,7 +118,7 @@ export default function MaterialsPage() {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">My Materials</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">My Materials</h1>
         <p className="text-gray-500 text-sm mt-1">
           Upload PDFs, PowerPoints, Word docs and text files — then read, listen or practise with them
         </p>
@@ -128,7 +128,7 @@ export default function MaterialsPage() {
       {totalFiles > 0 && (
         <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
           {[
-            { label: 'Files',          value: totalFiles,                    color: 'text-gray-800' },
+            { label: 'Files',          value: totalFiles,                    color: 'text-gray-100' },
             { label: 'Text Ready',     value: `${readyFiles}/${totalFiles}`, color: 'text-teal-soft' },
             { label: 'Storage',        value: `${totalSizeKB < 1024 ? totalSizeKB.toFixed(0) + ' KB' : (totalSizeKB/1024).toFixed(1) + ' MB'}`, color: 'text-gray-400' },
           ].map(s => (
@@ -152,12 +152,12 @@ export default function MaterialsPage() {
         {uploading ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 size={36} className="text-gold animate-spin"/>
-            <p className="text-gray-600 font-medium">Uploading…</p>
+            <p className="text-gray-300 font-medium">Uploading…</p>
           </div>
         ) : (
           <>
             <Upload size={36} className="text-gray-600 mx-auto mb-3"/>
-            <p className="text-gray-700 font-medium mb-1">Drop files here or tap to browse</p>
+            <p className="text-gray-200 font-medium mb-1">Drop files here or tap to browse</p>
             <p className="text-gray-500 text-sm">PDF · PPTX · DOCX · TXT — up to 20 MB each</p>
             <div className="flex justify-center gap-2 mt-4 flex-wrap">
               {['📄 PDF','📊 PPTX','📝 DOCX','📃 TXT'].map(f => (
@@ -174,7 +174,7 @@ export default function MaterialsPage() {
       <div className="flex gap-2.5 p-3 bg-ink-800 border border-white/[0.06] rounded-xl mb-5 text-xs text-gray-500">
         <Info size={13} className="text-gold shrink-0 mt-0.5"/>
         <p>
-          <span className="text-gray-600">Text extraction</span> happens automatically after upload (within seconds).
+          <span className="text-gray-300">Text extraction</span> happens automatically after upload (within seconds).
           Text-based PDFs and PPTX/DOCX work best. Scanned or image-only PDFs cannot be read — paste the text manually instead.
         </p>
       </div>
@@ -203,7 +203,7 @@ export default function MaterialsPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-gray-800 text-sm truncate max-w-[200px] sm:max-w-xs">
+                      <p className="font-medium text-gray-100 text-sm truncate max-w-[200px] sm:max-w-xs">
                         {mat.title}
                       </p>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border font-mono uppercase ${formatColor(mat.fileType)}`}>

@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-ink-950 text-gray-800 font-sans antialiased;
+    @apply bg-ink-950 text-gray-100 font-sans antialiased;
   }
 
   ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -14,33 +14,33 @@
 
 @layer components {
   .card {
-    @apply bg-white border border-ink-700 rounded-2xl p-5 shadow-sm;
+    @apply bg-ink-900 border border-white/[0.07] rounded-2xl p-5;
   }
 
   .card-sm {
-    @apply bg-white border border-ink-700 rounded-xl p-4 shadow-sm;
+    @apply bg-ink-900 border border-white/[0.07] rounded-xl p-4;
   }
 
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-gold text-white font-medium text-sm
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-gold text-ink-950 font-medium text-sm
            rounded-lg transition-all hover:opacity-85 active:scale-95 disabled:opacity-40
            disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-transparent text-gray-700 font-medium
-           text-sm rounded-lg border border-ink-700 transition-all hover:bg-ink-800
-           hover:border-ink-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-transparent text-gray-200 font-medium
+           text-sm rounded-lg border border-white/10 transition-all hover:bg-ink-800
+           hover:border-white/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center gap-2 px-3 py-1.5 bg-transparent text-gray-500 text-sm
-           rounded-lg transition-all hover:bg-ink-800 hover:text-gray-700 active:scale-95;
+    @apply inline-flex items-center gap-2 px-3 py-1.5 bg-transparent text-gray-400 text-sm
+           rounded-lg transition-all hover:bg-ink-800 hover:text-gray-200 active:scale-95;
   }
 
   .input {
-    @apply w-full bg-ink-900 border border-ink-700 rounded-lg px-4 py-3 text-sm text-gray-800
-           placeholder-gray-400 outline-none transition-colors focus:border-gold/50
+    @apply w-full bg-ink-800 border border-white/10 rounded-lg px-4 py-3 text-sm text-gray-100
+           placeholder-gray-500 outline-none transition-colors focus:border-gold/50
            focus:ring-1 focus:ring-gold/20;
   }
 
@@ -69,6 +69,6 @@
   }
 
   .spinner {
-    @apply w-4 h-4 border-2 border-ink-700 border-t-gold rounded-full animate-spin;
+    @apply w-4 h-4 border-2 border-white/10 border-t-gold rounded-full animate-spin;
   }
 }

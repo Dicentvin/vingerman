@@ -84,7 +84,7 @@ export default function ReadingDisplay({
                   bg-ink-700 border border-white/15 rounded-xl px-3 py-2.5
                   whitespace-nowrap shadow-2xl pointer-events-none text-left min-w-[120px]">
                   <span className="text-gold font-semibold text-xs block">{gloss.de}</span>
-                  <span className="text-gray-600 text-xs block mt-0.5">{gloss.en}</span>
+                  <span className="text-gray-300 text-xs block mt-0.5">{gloss.en}</span>
                   {gloss.ipa && <span className="text-violet-soft text-[10px] block mt-0.5">{gloss.ipa}</span>}
                 </span>
               )}
@@ -161,7 +161,7 @@ export default function ReadingDisplay({
                 {/* German */}
                 <td className="px-4 py-4 align-top">
                   <div className={`text-[15px] font-medium transition-all
-                    ${isActive ? 'text-gray-50' : 'text-gray-700'}`}>
+                    ${isActive ? 'text-gray-50' : 'text-gray-200'}`}>
                     {renderGermanWords(seg.text, idx)}
                   </div>
                   {/* Grammar note */}
@@ -275,7 +275,7 @@ export default function ReadingDisplay({
             </div>
 
             {/* German */}
-            <div className="text-gray-800 text-[15px]">
+            <div className="text-gray-100 text-[15px]">
               {renderGermanWords(seg.text, idx)}
             </div>
 
@@ -333,7 +333,7 @@ export default function ReadingDisplay({
                     <Volume2 size={11} className="opacity-0 group-hover:opacity-100 transition-opacity text-gold/60" />
                   </button>
                 </td>
-                <td className="py-2.5 pr-4 text-gray-600">{g.en}</td>
+                <td className="py-2.5 pr-4 text-gray-300">{g.en}</td>
                 <td className="py-2.5 text-violet-soft text-xs font-mono">{g.ipa || '—'}</td>
               </tr>
             ))}
@@ -350,7 +350,7 @@ export default function ReadingDisplay({
       {/* Header row */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="font-display text-2xl text-gray-800">{content.title}</h2>
+          <h2 className="font-display text-2xl text-gray-100">{content.title}</h2>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className={levelColors[content.level] || 'badge-gold'}>{content.level}</span>
             <span className="text-xs text-gray-500">
@@ -367,7 +367,7 @@ export default function ReadingDisplay({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
               ${displayMode === 'table'
                 ? 'bg-gold text-ink-950'
-                : 'text-gray-400 hover:text-gray-700'}`}
+                : 'text-gray-400 hover:text-gray-200'}`}
           >
             <Table2 size={13} /> Table
           </button>
@@ -376,7 +376,7 @@ export default function ReadingDisplay({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
               ${displayMode === 'prose'
                 ? 'bg-gold text-ink-950'
-                : 'text-gray-400 hover:text-gray-700'}`}
+                : 'text-gray-400 hover:text-gray-200'}`}
           >
             <AlignLeft size={13} /> Prose
           </button>

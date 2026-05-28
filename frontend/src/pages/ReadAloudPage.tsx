@@ -201,7 +201,7 @@ export default function ReadAloudPage() {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
               ${level === l
                 ? 'bg-gold/10 border-gold/40 text-gold'
-                : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-700'}`}>
+                : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-200'}`}>
             {l}
           </button>
         ))}
@@ -252,7 +252,7 @@ export default function ReadAloudPage() {
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all
               ${viewMode === 'reader'
                 ? 'bg-gold/10 border-gold/40 text-gold'
-                : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-700 hover:border-white/15'}`}
+                : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-200 hover:border-white/15'}`}
           >
             <Eye size={15} /> Free Read
           </button>
@@ -261,7 +261,7 @@ export default function ReadAloudPage() {
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all
               ${viewMode === 'tutor'
                 ? 'bg-violet-muted border-violet-soft/40 text-violet-soft'
-                : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-700 hover:border-white/15'}`}
+                : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-200 hover:border-white/15'}`}
           >
             <GraduationCap size={15} /> Tutor Mode
           </button>
@@ -271,7 +271,7 @@ export default function ReadAloudPage() {
         {viewMode === 'tutor' && (
           <div className="flex gap-3 px-4 py-3 bg-violet-muted border border-violet-soft/20 rounded-xl">
             <span className="text-xl shrink-0">👨‍🏫</span>
-            <div className="text-xs text-gray-600 leading-relaxed">
+            <div className="text-xs text-gray-300 leading-relaxed">
               <p className="font-medium text-violet-soft mb-0.5">How Tutor Mode works</p>
               I'll read each line aloud, then give you a 3-second countdown. Repeat exactly what I said —
               I'll score your pronunciation and give feedback. Pass a line to move on,
@@ -333,7 +333,7 @@ export default function ReadAloudPage() {
     <div className="p-6 lg:p-8 max-w-5xl mx-auto animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-display text-3xl text-gray-800">German Read Aloud</h1>
+        <h1 className="font-display text-3xl text-gray-100">German Read Aloud</h1>
         <p className="text-gray-500 text-sm mt-1">
           Load your material then choose{' '}
           <span className="text-gold">Free Read</span> to listen,
@@ -370,7 +370,7 @@ export default function ReadAloudPage() {
               ] as { key: TabKey; label: string }[]).map(t => (
                 <button key={t.key} onClick={() => setTab(t.key)}
                   className={`flex-1 py-2 text-[11px] font-medium rounded-lg transition-all
-                    ${tab === t.key ? 'bg-gold text-ink-950' : 'text-gray-400 hover:text-gray-700'}`}>
+                    ${tab === t.key ? 'bg-gold text-ink-950' : 'text-gray-400 hover:text-gray-200'}`}>
                   {t.label}
                 </button>
               ))}
@@ -388,7 +388,7 @@ export default function ReadAloudPage() {
                         className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all
                           ${type === ct.key
                             ? 'bg-gold/10 border-gold/30 text-gold'
-                            : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-700 hover:border-white/10'}`}>
+                            : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-200 hover:border-white/10'}`}>
                         <span className="font-medium">{ct.label}</span>
                         <span className="text-gray-600 ml-2">{ct.desc}</span>
                       </button>
@@ -403,7 +403,7 @@ export default function ReadAloudPage() {
                         className={`text-[11px] px-2 py-1 rounded-md border transition-all capitalize
                           ${topic === t && !customTopic
                             ? 'bg-teal-muted border-teal-soft/30 text-teal-soft'
-                            : 'bg-ink-800 border-white/[0.06] text-gray-500 hover:text-gray-600'}`}>
+                            : 'bg-ink-800 border-white/[0.06] text-gray-500 hover:text-gray-300'}`}>
                         {t}
                       </button>
                     ))}
@@ -451,7 +451,7 @@ export default function ReadAloudPage() {
                             <div className="flex items-start gap-2.5">
                               <span className="text-lg shrink-0 mt-0.5">{fileIcon(mat.fileType)}</span>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-700 truncate">{mat.title}</p>
+                                <p className="text-sm font-medium text-gray-200 truncate">{mat.title}</p>
                                 <p className="text-[10px] text-gray-600 mt-0.5">
                                   {mat.fileType?.toUpperCase()} · {fileSize(mat.fileSize)}
                                   {mat.hasText && <span className="ml-2 text-teal-soft">✓ ready</span>}

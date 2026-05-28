@@ -46,7 +46,7 @@ export default function PronouncePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto animate-fade-in">
       <div className="mb-5">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">Pronunciation Guide</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Pronunciation Guide</h1>
         <p className="text-gray-500 text-sm mt-1">Master every German sound with AI coaching</p>
       </div>
 
@@ -62,7 +62,7 @@ export default function PronouncePage() {
           </button>
         </div>
         {lesson && (
-          <div className="mt-4 bg-ink-800 rounded-xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap animate-slide-up max-h-72 overflow-y-auto">
+          <div className="mt-4 bg-ink-800 rounded-xl p-4 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap animate-slide-up max-h-72 overflow-y-auto">
             {lesson}
           </div>
         )}
@@ -74,7 +74,7 @@ export default function PronouncePage() {
           {PHONEMES.map(p => (
             <button key={p.de} onClick={() => speak(p.de)}
               className="text-left p-3 bg-ink-800 rounded-xl border border-white/[0.06] hover:border-violet-soft/40 hover:bg-violet-muted transition-all group">
-              <div className="font-display text-2xl text-gray-800 group-hover:text-violet-soft">{p.de}</div>
+              <div className="font-display text-2xl text-gray-100 group-hover:text-violet-soft">{p.de}</div>
               <div className="text-xs text-violet-soft mt-0.5">{p.ipa}</div>
               <div className="text-xs text-gray-500">{p.en}</div>
             </button>
@@ -88,7 +88,7 @@ export default function PronouncePage() {
           {PHRASES.map(p => (
             <div key={p.de} className="flex items-center gap-3 py-2.5 border-b border-white/[0.05] last:border-0">
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-gray-700">{p.de}</p>
+                <p className="font-medium text-sm text-gray-200">{p.de}</p>
                 <p className="text-xs text-gray-500">{p.en} <span className="text-violet-soft ml-1">{p.ipa}</span></p>
               </div>
               <button onClick={() => speak(p.de)} className="btn-ghost px-2 shrink-0"><Volume2 size={14}/></button>

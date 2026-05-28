@@ -405,7 +405,7 @@ export default function TutorSession({
         <div className="flex items-center gap-3 mb-2 flex-wrap">
           <div className="flex-1">
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Beginner Mode · Vocab Warm-Up</p>
-            <h2 className="font-display text-xl sm:text-2xl text-gray-800">{title}</h2>
+            <h2 className="font-display text-xl sm:text-2xl text-gray-100">{title}</h2>
           </div>
           <button onClick={onExit} className="btn-ghost text-xs text-gray-600 hover:text-red-400">✕ Exit</button>
         </div>
@@ -413,7 +413,7 @@ export default function TutorSession({
         {/* Tutor explanation */}
         <div className="flex gap-3 p-4 bg-violet-muted border border-violet-soft/20 rounded-2xl">
           <span className="text-2xl shrink-0">👨‍🏫</span>
-          <div className="text-sm text-gray-600 leading-relaxed">
+          <div className="text-sm text-gray-300 leading-relaxed">
             <p className="font-medium text-violet-soft mb-1">Before we read — let's learn the words first!</p>
             <p>Since you're at <strong className="text-white">Learner level</strong>, I will:</p>
             <ol className="mt-2 space-y-1 text-gray-400 list-decimal list-inside">
@@ -471,7 +471,7 @@ export default function TutorSession({
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex-1">
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Vocab Drill — Word {wordIdx + 1} of {totalWords}</p>
-            <h2 className="font-display text-xl text-gray-800">{title}</h2>
+            <h2 className="font-display text-xl text-gray-100">{title}</h2>
           </div>
           <button onClick={onExit} className="btn-ghost text-xs text-gray-600 hover:text-red-400">✕</button>
         </div>
@@ -486,7 +486,7 @@ export default function TutorSession({
         {/* Word card */}
         <div className="card text-center py-10 sm:py-14 relative">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <p className="font-display text-4xl sm:text-5xl text-gray-800">{currentWord?.word}</p>
+            <p className="font-display text-4xl sm:text-5xl text-gray-100">{currentWord?.word}</p>
             <Volume2 size={20} className="text-gold animate-pulse"/>
           </div>
           {currentWord?.ipa && <p className="text-violet-soft font-mono text-lg">{currentWord.ipa}</p>}
@@ -541,7 +541,7 @@ export default function TutorSession({
           <p className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">
             {currentMode === 'learner' ? '🐢 Beginner' : currentMode === 'moderate' ? '🚶 Moderate' : '🏎️ Native'} · Tutor Session
           </p>
-          <h2 className="font-display text-xl sm:text-2xl text-gray-800 truncate max-w-[260px] sm:max-w-xs">{title}</h2>
+          <h2 className="font-display text-xl sm:text-2xl text-gray-100 truncate max-w-[260px] sm:max-w-xs">{title}</h2>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
@@ -619,7 +619,7 @@ export default function TutorSession({
 
         {/* The sentence */}
         <p className={`font-display text-xl sm:text-2xl leading-relaxed mb-2
-          ${isRecord ? 'text-red-200' : 'text-gray-800'}`}>
+          ${isRecord ? 'text-red-200' : 'text-gray-100'}`}>
           {seg.text}
         </p>
 
@@ -661,7 +661,7 @@ export default function TutorSession({
             </button>
             <p className="text-sm text-red-400 font-medium">🔴 Speak now!</p>
             {spokenText && (
-              <div className="w-full bg-ink-700 rounded-xl px-4 py-3 text-sm text-gray-600 italic min-h-[44px] text-center">
+              <div className="w-full bg-ink-700 rounded-xl px-4 py-3 text-sm text-gray-300 italic min-h-[44px] text-center">
                 "{spokenText}"
               </div>
             )}
@@ -697,7 +697,7 @@ export default function TutorSession({
             <div className="space-y-1.5 text-xs bg-black/10 rounded-xl p-3">
               <div className="flex gap-2 flex-wrap">
                 <span className="text-gray-600 shrink-0 w-14">Target:</span>
-                <span className="text-gray-700 font-medium">{seg.text}</span>
+                <span className="text-gray-200 font-medium">{seg.text}</span>
               </div>
               <div className="flex gap-2 flex-wrap">
                 <span className="text-gray-600 shrink-0 w-14">You said:</span>
@@ -710,7 +710,7 @@ export default function TutorSession({
             {/* Coach message */}
             <div className="flex gap-2 px-1">
               <span className="text-base shrink-0">👨‍🏫</span>
-              <p className="text-sm text-gray-600 leading-relaxed">{coachMsg(score, attempt, currentMode, seg.text)}</p>
+              <p className="text-sm text-gray-300 leading-relaxed">{coachMsg(score, attempt, currentMode, seg.text)}</p>
             </div>
 
             {/* Attempt dots */}
@@ -781,7 +781,7 @@ function SessionComplete({ results, segments, title, totalPassed, totalSkipped, 
     <div className="card space-y-4 sm:space-y-5 animate-slide-up">
       <div className="text-center pt-2">
         <div className="text-5xl sm:text-6xl mb-3">{medal}</div>
-        <h2 className="font-display text-2xl sm:text-3xl text-gray-800 mb-1">Session Complete!</h2>
+        <h2 className="font-display text-2xl sm:text-3xl text-gray-100 mb-1">Session Complete!</h2>
         <p className="text-gray-500 text-sm">"{title}"</p>
       </div>
 
@@ -808,7 +808,7 @@ function SessionComplete({ results, segments, title, totalPassed, totalSkipped, 
             return (
               <div key={r.idx} className={`flex items-start gap-2 sm:gap-3 rounded-xl p-2.5 sm:p-3 border ${sl.bg}`}>
                 {r.passed ? <CheckCircle2 size={14} className="text-teal-soft shrink-0 mt-0.5"/> : <XCircle size={14} className="text-orange-400 shrink-0 mt-0.5"/>}
-                <p className="text-xs text-gray-600 flex-1 leading-relaxed truncate">{segments[r.idx]?.text}</p>
+                <p className="text-xs text-gray-300 flex-1 leading-relaxed truncate">{segments[r.idx]?.text}</p>
                 <div className="text-right shrink-0">
                   <p className={`text-xs font-medium ${sl.color}`}>{r.bestScore}/100</p>
                   <p className="text-[9px] text-gray-600">{r.attempts} try{r.attempts !== 1 ? 's' : ''}</p>
@@ -821,7 +821,7 @@ function SessionComplete({ results, segments, title, totalPassed, totalSkipped, 
 
       <div className="flex gap-2.5 bg-ink-800 rounded-xl p-3 sm:p-4">
         <span className="text-base sm:text-lg shrink-0">👨‍🏫</span>
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p className="text-sm text-gray-300 leading-relaxed">
           {pct >= 90 ? 'Outstanding! Your German reading is excellent. Be very proud!'
            : pct >= 70 ? 'Great work! You passed most lines confidently.'
            : pct >= 50 ? 'Good effort! Try again and you\'ll improve each time.'

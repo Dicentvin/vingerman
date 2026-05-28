@@ -50,7 +50,7 @@ export default function PodcastPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto animate-fade-in">
       <div className="mb-5">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">File to Podcast</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">File to Podcast</h1>
         <p className="text-gray-500 text-sm mt-1">Upload learning material → get an AI podcast script</p>
       </div>
 
@@ -61,7 +61,7 @@ export default function PodcastPage() {
         onDragLeave={() => setDragover(false)}
         onDrop={e => { e.preventDefault(); setDragover(false); handleFileUpload(e.dataTransfer.files[0]) }}>
         <Upload size={28} className="text-gray-600 mx-auto mb-3"/>
-        <p className="text-gray-600 font-medium text-sm">{uploading ? 'Uploading…' : 'Drop PDF, PPTX, DOCX or TXT here'}</p>
+        <p className="text-gray-300 font-medium text-sm">{uploading ? 'Uploading…' : 'Drop PDF, PPTX, DOCX or TXT here'}</p>
         <p className="text-gray-600 text-xs mt-1">or tap to browse</p>
         <input ref={fileRef} type="file" accept=".pdf,.pptx,.docx,.doc,.txt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" className="hidden"
           onChange={e => handleFileUpload(e.target.files?.[0])}/>
@@ -103,7 +103,7 @@ export default function PodcastPage() {
       {script && (
         <div className="mt-6 card animate-slide-up">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-            <h3 className="font-medium text-gray-700 flex items-center gap-2"><Mic2 size={16} className="text-gold"/> Podcast Script</h3>
+            <h3 className="font-medium text-gray-200 flex items-center gap-2"><Mic2 size={16} className="text-gold"/> Podcast Script</h3>
             <div className="flex gap-2">
               {speaking
                 ? <button onClick={handleStop} className="btn-ghost text-red-400"><Square size={14}/> Stop</button>
@@ -111,7 +111,7 @@ export default function PodcastPage() {
               <button onClick={handleCopy} className="btn-ghost"><Copy size={14}/> Copy</button>
             </div>
           </div>
-          <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto">{script}</div>
+          <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto">{script}</div>
         </div>
       )}
     </div>

@@ -37,7 +37,7 @@ export default function VoiceSelector({ voices, selected, onSelect }: Props) {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all
                 ${isSelected
                   ? 'bg-gold/10 border-gold/30 text-gold'
-                  : 'bg-ink-800 border-white/[0.06] text-gray-600 hover:border-white/15 hover:text-gray-800'
+                  : 'bg-ink-800 border-white/[0.06] text-gray-300 hover:border-white/15 hover:text-gray-100'
                 }`}
             >
               <Mic2 size={13} className="shrink-0" />

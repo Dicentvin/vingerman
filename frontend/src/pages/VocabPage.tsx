@@ -58,7 +58,7 @@ export default function VocabPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto animate-fade-in">
       <div className="mb-6">
-        <h1 className="font-display text-3xl text-gray-800">Vocabulary Builder</h1>
+        <h1 className="font-display text-3xl text-gray-100">Vocabulary Builder</h1>
         <p className="text-gray-500 text-sm mt-1">Generate topic-based word lists, saved to your account</p>
       </div>
 
@@ -75,7 +75,7 @@ export default function VocabPage() {
                   className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all
                     ${selectedTopic === t.key && !customTopic
                       ? 'bg-gold/10 border-gold/30 text-gold'
-                      : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-700'
+                      : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-200'
                     }`}
                 >
                   {t.label}
@@ -104,7 +104,7 @@ export default function VocabPage() {
                     key={list._id}
                     onClick={() => dispatch(setCurrentList(list))}
                     className={`flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all group
-                      ${currentList?._id === list._id ? 'bg-gold/10 text-gold' : 'hover:bg-ink-800 text-gray-600'}`}
+                      ${currentList?._id === list._id ? 'bg-gold/10 text-gold' : 'hover:bg-ink-800 text-gray-300'}`}
                   >
                     <BookOpen size={13} className="shrink-0" />
                     <span className="text-sm flex-1 truncate capitalize">{list.topic}</span>
@@ -128,7 +128,7 @@ export default function VocabPage() {
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="font-display text-xl text-gray-800 capitalize">{currentList.topic}</h2>
+                  <h2 className="font-display text-xl text-gray-100 capitalize">{currentList.topic}</h2>
                   <p className="text-xs text-gray-500 mt-0.5">{masteredCount}/{totalCount} mastered</p>
                 </div>
                 <div className="w-24">
@@ -160,7 +160,7 @@ export default function VocabPage() {
                       </button>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-gray-800">{word.de}</span>
+                          <span className="font-medium text-gray-100">{word.de}</span>
                           {word.ipa && <span className="text-xs text-violet-soft">{word.ipa}</span>}
                           <button onClick={() => speak(word.de)} className="btn-ghost p-0.5">
                             <Volume2 size={12} className="text-gray-500" />

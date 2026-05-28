@@ -168,7 +168,7 @@ export default function ExamPracticePage() {
         {/* Instruction */}
         <div className="flex gap-2.5 p-3 bg-gold/5 border border-gold/15 rounded-xl">
           <Trophy size={14} className="text-gold shrink-0 mt-0.5"/>
-          <p className="text-sm text-gray-600 leading-relaxed">{question.instruction}</p>
+          <p className="text-sm text-gray-300 leading-relaxed">{question.instruction}</p>
         </div>
 
         {/* HÖREN transcript */}
@@ -177,7 +177,7 @@ export default function ExamPracticePage() {
             {question.speakers && (
               <p className="text-[10px] text-gray-500 mb-2 uppercase tracking-widest">{question.speakers}</p>
             )}
-            <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-700 leading-relaxed font-mono whitespace-pre-wrap">
+            <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-200 leading-relaxed font-mono whitespace-pre-wrap">
               {question.transcript}
             </div>
             <button onClick={() => speak(question.transcript!)} className="btn-ghost text-xs gap-1.5 mt-3">
@@ -190,7 +190,7 @@ export default function ExamPracticePage() {
         {skill === 'lesen' && question.text && (
           <div className="card">
             <p className="text-[10px] text-gray-500 mb-2 uppercase tracking-widest">📖 Text</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{question.text}</p>
+            <p className="text-sm text-gray-200 leading-relaxed">{question.text}</p>
             <button onClick={() => speak(question.text!)} className="btn-ghost text-xs gap-1.5 mt-3">
               <Volume2 size={13}/> Hear text
             </button>
@@ -200,7 +200,7 @@ export default function ExamPracticePage() {
         {/* Multiple choice (Lesen / Hören) */}
         {(skill === 'lesen' || skill === 'horen') && question.question && (
           <div className="card">
-            <p className="font-medium text-gray-800 text-sm mb-3">{question.question}</p>
+            <p className="font-medium text-gray-100 text-sm mb-3">{question.question}</p>
             <div className="space-y-2">
               {(question.options || []).map(opt => (
                 <button key={opt}
@@ -214,7 +214,7 @@ export default function ExamPracticePage() {
                         : 'bg-gold/10 border-gold/40 text-gold'
                       : result && opt[0] === question.correctOption
                       ? 'bg-teal-muted border-teal-soft/40 text-teal-soft'
-                      : 'bg-ink-800 border-white/[0.06] text-gray-600 hover:border-white/15'}`}>
+                      : 'bg-ink-800 border-white/[0.06] text-gray-300 hover:border-white/15'}`}>
                   {opt}
                 </button>
               ))}
@@ -228,7 +228,7 @@ export default function ExamPracticePage() {
             {question.prompt && (
               <div className="card">
                 <p className="text-[10px] text-gray-500 mb-2 uppercase tracking-widest">📝 Your Task</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{question.prompt}</p>
+                <p className="text-sm text-gray-200 leading-relaxed">{question.prompt}</p>
                 {question.keyPoints && question.keyPoints.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-white/[0.06]">
                     <p className="text-[10px] text-gray-500 mb-1.5">You must mention:</p>
@@ -262,7 +262,7 @@ export default function ExamPracticePage() {
                 <p className="text-[10px] text-gray-500 mb-2 uppercase tracking-widest">
                   🗣️ Speaking Task · {question.type}
                 </p>
-                <p className="text-sm text-gray-700 leading-relaxed font-medium">{question.task}</p>
+                <p className="text-sm text-gray-200 leading-relaxed font-medium">{question.task}</p>
                 {question.promptQuestions && question.promptQuestions.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-white/[0.06]">
                     <p className="text-[10px] text-gray-500 mb-1.5">Address these points:</p>
@@ -337,7 +337,7 @@ export default function ExamPracticePage() {
             {(skill === 'lesen' || skill === 'horen') && question?.explanation && (
               <div className="flex gap-2.5 p-3 bg-ink-800 border border-white/[0.07] rounded-xl">
                 <span className="text-base shrink-0">💡</span>
-                <p className="text-xs text-gray-600 leading-relaxed">{question.explanation}</p>
+                <p className="text-xs text-gray-300 leading-relaxed">{question.explanation}</p>
               </div>
             )}
 
@@ -347,7 +347,7 @@ export default function ExamPracticePage() {
                 <p className="section-label flex items-center gap-1.5">
                   <Trophy size={12}/> Examiner Feedback
                 </p>
-                <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
+                <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
                   {result.feedback}
                 </div>
               </div>
@@ -358,14 +358,14 @@ export default function ExamPracticePage() {
               <div className="card">
                 <button onClick={() => setShowSample(v => !v)}
                   className="w-full flex items-center justify-between text-left">
-                  <span className="text-sm text-gray-600 font-medium">📝 Model Answer</span>
+                  <span className="text-sm text-gray-300 font-medium">📝 Model Answer</span>
                   <span className="text-xs text-gray-500">{showSample ? 'Hide' : 'Show'}</span>
                 </button>
                 {showSample && (
                   <div className="mt-3 space-y-2 animate-fade-in">
                     <div className="bg-ink-800 rounded-xl p-3">
                       <p className="text-xs text-gray-500 mb-1">German:</p>
-                      <p className="text-sm text-gray-700 leading-relaxed">{question.sampleAnswer}</p>
+                      <p className="text-sm text-gray-200 leading-relaxed">{question.sampleAnswer}</p>
                       <button onClick={() => speak(question.sampleAnswer!)} className="btn-ghost text-xs gap-1 mt-2">
                         <Volume2 size={11}/> Hear model answer
                       </button>
@@ -431,7 +431,7 @@ export default function ExamPracticePage() {
                 <div key={h._id} className="flex items-center gap-3 py-2 border-b border-white/[0.05] last:border-0">
                   <div className={skillInfo?.color}>{skillInfo?.icon}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-600 capitalize truncate">{h.topic}</p>
+                    <p className="text-xs text-gray-300 capitalize truncate">{h.topic}</p>
                     <p className="text-[10px] text-gray-600">{SKILL_LABELS[h.skill as Skill]} · {h.level}</p>
                   </div>
                   <div className="text-right shrink-0">
@@ -456,7 +456,7 @@ export default function ExamPracticePage() {
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
           <Trophy size={20} className="text-gold"/>
-          <h1 className="font-display text-2xl sm:text-3xl text-gray-800">Exam Practice</h1>
+          <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Exam Practice</h1>
         </div>
         <p className="text-gray-500 text-sm">Goethe-Zertifikat style questions for all four exam skills</p>
       </div>
@@ -466,7 +466,7 @@ export default function ExamPracticePage() {
         {([['practice', '⚡ Practice'], ['stats', '📊 My Stats']] as const).map(([k, l]) => (
           <button key={k} onClick={() => setActiveTab(k)}
             className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all
-              ${activeTab === k ? 'bg-gold text-ink-950' : 'text-gray-400 hover:text-gray-700'}`}>
+              ${activeTab === k ? 'bg-gold text-ink-950' : 'text-gray-400 hover:text-gray-200'}`}>
             {l}
           </button>
         ))}
@@ -485,7 +485,7 @@ export default function ExamPracticePage() {
                     className={`flex-1 py-2.5 rounded-xl border font-display text-lg transition-all
                       ${level === l
                         ? 'bg-gold/10 border-gold/40 text-gold'
-                        : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-700'}`}>
+                        : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-200'}`}>
                     {l}
                   </button>
                 ))}
@@ -517,7 +517,7 @@ export default function ExamPracticePage() {
                     className={`text-xs px-3 py-1.5 rounded-lg border transition-all capitalize
                       ${topic === t
                         ? 'bg-gold/10 border-gold/30 text-gold'
-                        : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-700'}`}>
+                        : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-200'}`}>
                     {t}
                   </button>
                 ))}

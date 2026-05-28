@@ -47,7 +47,7 @@ export default function ChallengePage() {
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto animate-fade-in">
       <div className="mb-5">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">Daily Challenge</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Daily Challenge</h1>
         <p className="text-gray-500 text-sm mt-1">One challenge per day — earn bonus XP and climb the leaderboard</p>
       </div>
 
@@ -56,7 +56,7 @@ export default function ChallengePage() {
         {([['challenge','⚡ Today\'s Challenge'],['leaderboard','🏆 Leaderboard']] as const).map(([k,l]) => (
           <button key={k} onClick={() => setActiveTab(k)}
             className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all
-              ${activeTab === k ? 'bg-gold text-ink-950' : 'text-gray-400 hover:text-gray-700'}`}>
+              ${activeTab === k ? 'bg-gold text-ink-950' : 'text-gray-400 hover:text-gray-200'}`}>
             {l}
           </button>
         ))}
@@ -89,7 +89,7 @@ export default function ChallengePage() {
                     <span className="text-gold text-lg">❓</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-gray-800 text-base sm:text-lg font-medium leading-relaxed">{today.question}</p>
+                    <p className="text-gray-100 text-base sm:text-lg font-medium leading-relaxed">{today.question}</p>
                     {today.hint && !today.completed && (
                       <p className="text-xs text-gray-600 mt-2 italic">💡 Hint: {today.hint}</p>
                     )}
@@ -108,7 +108,7 @@ export default function ChallengePage() {
                   {today.options.map(opt => (
                     <button key={opt} onClick={() => setAnswer(opt)}
                       className={`p-3 rounded-xl border text-sm text-left transition-all
-                        ${answer === opt ? 'bg-gold/10 border-gold/40 text-gold' : 'bg-ink-800 border-white/[0.06] text-gray-600 hover:border-white/15'}`}>
+                        ${answer === opt ? 'bg-gold/10 border-gold/40 text-gold' : 'bg-ink-800 border-white/[0.06] text-gray-300 hover:border-white/15'}`}>
                       {opt}
                     </button>
                   ))}
@@ -154,7 +154,7 @@ export default function ChallengePage() {
                   {result.explanation && (
                     <div className="flex gap-2.5 pt-3 border-t border-white/[0.07]">
                       <span className="text-base shrink-0">👨‍🏫</span>
-                      <p className="text-sm text-gray-600 leading-relaxed">{result.explanation}</p>
+                      <p className="text-sm text-gray-300 leading-relaxed">{result.explanation}</p>
                     </div>
                   )}
                 </div>
@@ -205,7 +205,7 @@ export default function ChallengePage() {
                         {idx < 3 ? MEDAL_ICONS[idx] : <span className="text-xs text-gray-500 font-mono">#{idx+1}</span>}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate ${isMe ? 'text-gold' : 'text-gray-700'}`}>
+                        <p className={`text-sm font-medium truncate ${isMe ? 'text-gold' : 'text-gray-200'}`}>
                           {entry.name} {isMe && '(you)'}
                         </p>
                         <div className="flex items-center gap-1.5">
@@ -214,7 +214,7 @@ export default function ChallengePage() {
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className={`text-sm font-semibold ${isMe ? 'text-gold' : 'text-gray-600'}`}>{entry.xp.toLocaleString()}</p>
+                        <p className={`text-sm font-semibold ${isMe ? 'text-gold' : 'text-gray-300'}`}>{entry.xp.toLocaleString()}</p>
                         <p className="text-[10px] text-gray-600">XP</p>
                       </div>
                     </div>
