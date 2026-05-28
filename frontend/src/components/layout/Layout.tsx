@@ -7,7 +7,8 @@ import {
   LogOut, Flame, Headphones, PenLine, CreditCard,
   MessageSquare, Trophy, Menu, X, GraduationCap,
   FolderOpen, Award, ClipboardList,
-} 
+} from 'lucide-react'
+
 const navItems = [
   { to: '/',           icon: LayoutDashboard, label: 'Dashboard',       end: true },
   { to: '/podcast',    icon: Mic2,            label: 'File to Podcast'  },
