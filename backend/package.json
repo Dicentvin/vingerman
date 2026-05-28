@@ -1,7 +1,7 @@
 {
-  "name": "deutsch-studio-backend",
+  "name": "german-made-easy-backend",
   "version": "1.0.0",
-  "description": "Deutsch Studio API \u2014 German Learning App Backend",
+  "description": "German Made Easy Academy API \u2014 German Learning App Backend",
   "main": "server.js",
   "type": "module",
   "scripts": {

@@ -9,12 +9,14 @@ const writingSchema = new mongoose.Schema({
   corrected: { type: String, required: true },
   score:     { type: Number },
   diffs:     [{
-    original: String, corrected: String,
-    type: { type: String }, explanation: String,
+    original:    String,
+    corrected:   String,
+    type:        { type: String },
+    explanation: String,
     _id: false,
   }],
-  summary:        { type: String },
-  encouragement:  { type: String },
+  summary:       { type: String },
+  encouragement: { type: String },
 }, { timestamps: true });
 
 const Writing = mongoose.models.Writing || mongoose.model('Writing', writingSchema);
@@ -42,7 +44,7 @@ Return a JSON object:
       "original": "the incorrect word/phrase from the original",
       "corrected": "the correct version",
       "type": "grammar|gender|case|word-order|spelling|vocabulary",
-      "explanation": "Brief English explanation of why this is wrong and the rule (max 120 chars)"
+      "explanation": "Brief English explanation of why this is wrong (max 120 chars)"
     }
   ]
 }
@@ -51,20 +53,19 @@ Rules:
 - score: 0-100 reflecting correctness (100 = perfect)
 - diffs: list EVERY error found; empty array [] if no errors
 - type must be one of: grammar, gender, case, word-order, spelling, vocabulary
-- Keep explanations concise and educational
-- encouragement should match the score — celebrate high scores, be warm for low ones`
+- Keep explanations concise and educational`
     );
 
     const correction = {
       original:      text,
       corrected:     String(parsed.corrected || text).trim(),
       score:         Math.min(100, Math.max(0, parseInt(parsed.score) || 50)),
-      diffs:         (parsed.diffs || []).map((d: Record<string, string>) => ({
+      diffs:         (parsed.diffs || []).map(d => ({
         original:    String(d.original || '').trim(),
         corrected:   String(d.corrected || '').trim(),
         type:        String(d.type || 'grammar'),
         explanation: String(d.explanation || '').trim(),
-      })).filter((d: {original: string}) => d.original),
+      })).filter(d => d.original),
       summary:       String(parsed.summary || '').trim(),
       encouragement: String(parsed.encouragement || 'Keep practising — you\'re improving!').trim(),
     };

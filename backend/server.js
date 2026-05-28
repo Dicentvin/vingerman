@@ -54,7 +54,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Deutsch Studio API — port ${PORT}`);
+  console.log(`🚀 German Made Easy Academy API — port ${PORT}`);
   console.log(`📦 MongoDB · 🔑 JWT · 🤖 Groq · 14 routes registered`);
 });
 

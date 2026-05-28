@@ -41,8 +41,8 @@ export default function Layout() {
       {/* Logo */}
       <div className="px-5 pt-6 pb-5 border-b border-white/[0.07] flex items-center justify-between">
         <div>
-          <h1 className="font-display text-xl text-gold tracking-tight">Deutsch Studio</h1>
-          <p className="text-xs text-gray-500 mt-0.5 italic">KI-gestützte Lernapp</p>
+          <h1 className="font-display text-xl text-gold tracking-tight">German Made Easy Academy</h1>
+          <p className="text-xs text-gray-500 mt-0.5 italic">AI-Powered German Learning</p>
         </div>
         <button onClick={() => setOpen(false)} className="lg:hidden btn-ghost p-2">
           <X size={18}/>
@@ -116,7 +116,7 @@ export default function Layout() {
           <button onClick={() => setOpen(true)} className="btn-ghost p-2">
             <Menu size={20}/>
           </button>
-          <span className="font-display text-lg text-gold">Deutsch Studio</span>
+          <span className="font-display text-lg text-gold">German Made Easy Academy</span>
           <div className="ml-auto flex items-center gap-2">
             <span className="badge-gold text-[10px]">{user?.level || 'A1'}</span>
             <div className="flex items-center gap-1">
