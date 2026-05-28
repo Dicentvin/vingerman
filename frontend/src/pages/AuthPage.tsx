@@ -40,7 +40,7 @@ export default function AuthPage({ mode }: Props) {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="font-display text-4xl text-gold mb-2">Deutsch Studio</h1>
+          <h1 className="font-display text-4xl text-gold mb-2">Chukwudi Germany Academy</h1>
           <p className="text-gray-500 text-sm">Your AI-powered German learning companion</p>
           <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-teal-muted border border-teal-soft/20 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-soft animate-pulse" />
@@ -49,7 +49,7 @@ export default function AuthPage({ mode }: Props) {
         </div>
 
         <div className="card">
-          <h2 className="font-display text-2xl text-gray-100 mb-1">
+          <h2 className="font-display text-2xl text-gray-800 mb-1">
             {isLogin ? 'Willkommen zurück' : 'Fangen wir an'}
           </h2>
           <p className="text-gray-500 text-sm mb-6">

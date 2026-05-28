@@ -54,7 +54,7 @@ export default function WritingPage() {
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto animate-fade-in">
       <div className="mb-5">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">AI Writing Corrector</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">AI Writing Corrector</h1>
         <p className="text-gray-500 text-sm mt-1">Write in German → get grammar, gender & word-order corrections</p>
       </div>
 
@@ -65,7 +65,7 @@ export default function WritingPage() {
           {CEFR_LEVELS.map(l => (
             <button key={l} onClick={() => setLevel(l)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
-                ${level === l ? 'bg-gold/10 border-gold/40 text-gold' : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-200'}`}>
+                ${level === l ? 'bg-gold/10 border-gold/40 text-gold' : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-700'}`}>
               {l}
             </button>
           ))}
@@ -103,7 +103,7 @@ export default function WritingPage() {
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="flex-1 min-w-0">
                 <p className="section-label">Corrected Version</p>
-                <p className="text-gray-100 text-base sm:text-lg font-medium leading-relaxed">{correction.corrected}</p>
+                <p className="text-gray-800 text-base sm:text-lg font-medium leading-relaxed">{correction.corrected}</p>
                 <p className="text-gray-500 text-xs mt-1 italic">{correction.summary}</p>
               </div>
               <div className="text-center shrink-0">
@@ -149,7 +149,7 @@ export default function WritingPage() {
           ) : (
             <div className="card text-center py-8">
               <CheckCircle2 size={36} className="text-teal-soft mx-auto mb-2"/>
-              <p className="text-gray-200 font-medium">Perfekt! No errors found.</p>
+              <p className="text-gray-700 font-medium">Perfekt! No errors found.</p>
               <p className="text-gray-500 text-sm mt-1">{correction.encouragement}</p>
             </div>
           )}
@@ -157,7 +157,7 @@ export default function WritingPage() {
           {correction.diffs.length > 0 && (
             <div className="flex gap-2.5 px-4 py-3 bg-ink-800 rounded-xl">
               <span className="text-lg shrink-0">👨‍🏫</span>
-              <p className="text-sm text-gray-300 leading-relaxed">{correction.encouragement}</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{correction.encouragement}</p>
             </div>
           )}
         </div>
@@ -178,7 +178,7 @@ export default function WritingPage() {
                   <div className={`text-xs font-display px-2 py-1 rounded-lg shrink-0 ${scoreColor(h.score)} bg-ink-700`}>{h.score}</div>
                   <div className="min-w-0">
                     <p className="text-xs text-gray-400 truncate italic">"{h.original}"</p>
-                    <p className="text-xs text-gray-200 truncate mt-0.5">→ {h.corrected}</p>
+                    <p className="text-xs text-gray-700 truncate mt-0.5">→ {h.corrected}</p>
                   </div>
                 </div>
               ))}

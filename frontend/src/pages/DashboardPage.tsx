@@ -27,7 +27,7 @@ export default function DashboardPage() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto animate-fade-in">
       <div className="mb-6">
         <p className="text-gray-500 text-sm mb-1">{greeting},</p>
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">{user?.name || 'Learner'} 👋</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">{user?.name || 'Learner'} 👋</h1>
       </div>
 
       {/* Stats */}
@@ -40,7 +40,7 @@ export default function DashboardPage() {
         ].map(({ label, value, icon: Icon, color, suffix }) => (
           <div key={label} className="card-sm">
             <Icon size={16} className={`${color} mb-2`}/>
-            <p className="text-xl sm:text-2xl font-display text-gray-100">{value}{suffix}</p>
+            <p className="text-xl sm:text-2xl font-display text-gray-800">{value}{suffix}</p>
             <p className="text-xs text-gray-500 mt-0.5">{label}</p>
           </div>
         ))}
@@ -56,7 +56,7 @@ export default function DashboardPage() {
               <Icon size={18} className={color}/>
             </div>
             <div>
-              <h3 className="font-medium text-gray-100 text-sm group-hover:text-white">{label}</h3>
+              <h3 className="font-medium text-gray-800 text-sm group-hover:text-white">{label}</h3>
               <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
             </div>
           </Link>
@@ -65,7 +65,7 @@ export default function DashboardPage() {
 
       <div className="mt-5 p-4 bg-gold/5 border border-gold/15 rounded-2xl">
         <p className="text-xs text-gold/70 uppercase tracking-widest mb-1">Tipp des Tages</p>
-        <p className="text-sm text-gray-300">
+        <p className="text-sm text-gray-600">
           In German, all nouns are capitalized — <span className="text-gold">der Hund</span> (the dog),{' '}
           <span className="text-gold">die Stadt</span> (the city), <span className="text-gold">das Buch</span> (the book).
         </p>

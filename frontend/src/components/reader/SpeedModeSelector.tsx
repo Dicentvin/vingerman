@@ -13,7 +13,7 @@ const modeColors: Record<SpeechMode, string> = {
 }
 
 const modeInactive =
-  'border-white/[0.07] bg-ink-800 text-gray-400 hover:border-white/20 hover:text-gray-200'
+  'border-white/[0.07] bg-ink-800 text-gray-400 hover:border-white/20 hover:text-gray-700'
 
 export default function SpeedModeSelector({ current, onChange, disabled }: Props) {
   return (

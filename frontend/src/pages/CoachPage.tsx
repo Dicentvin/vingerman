@@ -58,7 +58,7 @@ export default function CoachPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto animate-fade-in">
       <div className="mb-5">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Speaking Coach</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">Speaking Coach</h1>
         <p className="text-gray-500 text-sm mt-1">Record yourself speaking German and get AI feedback</p>
       </div>
 
@@ -79,7 +79,7 @@ export default function CoachPage() {
         </button>
         <p className="text-sm text-gray-500 mb-3">{isRecording ? '🔴 Recording…' : 'Tap to record'}</p>
         <div className="bg-ink-800 rounded-xl p-4 min-h-[56px] text-sm text-left">
-          {spoken ? <span className="text-gray-200 italic">"{spoken}"</span> : <span className="text-gray-600">Your speech appears here…</span>}
+          {spoken ? <span className="text-gray-700 italic">"{spoken}"</span> : <span className="text-gray-600">Your speech appears here…</span>}
         </div>
         <div className="flex gap-2 justify-center mt-4 flex-wrap">
           <button onClick={handleEvaluate} className="btn-primary" disabled={evalLoading || !spoken}>
@@ -92,10 +92,10 @@ export default function CoachPage() {
       {feedback && (
         <div className="card mb-5 animate-slide-up">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-gray-200">AI Feedback</h3>
+            <h3 className="font-medium text-gray-700">AI Feedback</h3>
             {score !== null && <div className={`font-display text-2xl ${scoreColor}`}>{score}<span className="text-sm text-gray-500">/10</span></div>}
           </div>
-          <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap max-h-80 overflow-y-auto">{feedback}</div>
+          <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap max-h-80 overflow-y-auto">{feedback}</div>
         </div>
       )}
 
@@ -106,7 +106,7 @@ export default function CoachPage() {
             <div key={p.de} onClick={() => setTarget(p.de)}
               className="flex items-center gap-3 py-2.5 border-b border-white/[0.05] last:border-0 cursor-pointer hover:bg-ink-800 rounded-lg px-2 -mx-2 transition-all group">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-200 group-hover:text-gold transition-colors truncate">{p.de}</p>
+                <p className="text-sm font-medium text-gray-700 group-hover:text-gold transition-colors truncate">{p.de}</p>
                 <p className="text-xs text-gray-500 truncate">{p.en} <span className="text-violet-soft">{p.ipa}</span></p>
               </div>
               <button onClick={e => { e.stopPropagation(); speak(p.de) }} className="btn-ghost px-2 opacity-0 group-hover:opacity-100 shrink-0">

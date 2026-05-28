@@ -11,25 +11,25 @@ export default {
       },
       colors: {
         ink: {
-          950: '#0e0e12',
-          900: '#16161d',
-          800: '#1e1e28',
-          700: '#282835',
-          600: '#363645',
+          950: '#ffffff',
+          900: '#f8f9fc',
+          800: '#f0f2f8',
+          700: '#e4e8f2',
+          600: '#d6dced',
         },
         gold: {
-          DEFAULT: '#c8a96e',
-          light: '#e0c898',
-          dark: '#a08040',
-          muted: 'rgba(200,169,110,0.12)',
+          DEFAULT: '#1a56db',
+          light: '#3b82f6',
+          dark: '#1e40af',
+          muted: 'rgba(26,86,219,0.10)',
         },
         violet: {
-          soft: '#7c6fc4',
-          muted: 'rgba(124,111,196,0.12)',
+          soft: '#7c3aed',
+          muted: 'rgba(124,58,237,0.10)',
         },
         teal: {
-          soft: '#4dbf9e',
-          muted: 'rgba(77,191,158,0.12)',
+          soft: '#0891b2',
+          muted: 'rgba(8,145,178,0.10)',
         },
       },
       animation: {

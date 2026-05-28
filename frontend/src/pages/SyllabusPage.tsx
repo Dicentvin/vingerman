@@ -352,7 +352,7 @@ export default function SyllabusPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Trophy size={20} className="text-gold"/>
-          <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Goethe Exam Prep</h1>
+          <h1 className="font-display text-2xl sm:text-3xl text-gray-800">Goethe Exam Prep</h1>
         </div>
         <p className="text-gray-500 text-sm">Structured syllabus for Goethe-Zertifikat A1 & A2 — track your progress topic by topic</p>
       </div>
@@ -364,7 +364,7 @@ export default function SyllabusPage() {
             className={`flex-1 sm:flex-none px-6 py-3 rounded-xl border font-display text-lg transition-all
               ${level === l
                 ? 'bg-gold/10 border-gold/40 text-gold shadow-[0_0_20px_rgba(200,169,110,0.1)]'
-                : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-200 hover:border-white/15'}`}>
+                : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-700 hover:border-white/15'}`}>
             {l}
           </button>
         ))}
@@ -374,7 +374,7 @@ export default function SyllabusPage() {
       <div className="card mb-5">
         <div className="flex flex-col sm:flex-row sm:items-start gap-4">
           <div className="flex-1">
-            <h2 className="font-display text-xl text-gray-100">{syllabus.title}</h2>
+            <h2 className="font-display text-xl text-gray-800">{syllabus.title}</h2>
             <p className="text-gold text-sm mb-2">{syllabus.subtitle}</p>
             <p className="text-gray-400 text-sm leading-relaxed">{syllabus.description}</p>
           </div>
@@ -417,7 +417,7 @@ export default function SyllabusPage() {
           {syllabus.examFormat.map(f => (
             <div key={f.skill} className="bg-ink-800 rounded-xl p-3 border border-white/[0.06]">
               <div className="text-2xl mb-1.5">{f.icon}</div>
-              <p className="font-medium text-gray-100 text-sm">{f.skill}</p>
+              <p className="font-medium text-gray-800 text-sm">{f.skill}</p>
               <p className="text-xs text-gold">{f.duration} · {f.parts} parts</p>
               <p className="text-[10px] text-gray-500 mt-1.5 leading-relaxed">{f.description}</p>
             </div>
@@ -453,7 +453,7 @@ export default function SyllabusPage() {
                   </button>
                   <span className="text-xl shrink-0">{topic.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium text-sm ${isDone ? 'text-teal-soft' : 'text-gray-200'}`}>
+                    <p className={`font-medium text-sm ${isDone ? 'text-teal-soft' : 'text-gray-700'}`}>
                       {topic.title}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -487,7 +487,7 @@ export default function SyllabusPage() {
                         </p>
                         <ul className="space-y-1.5">
                           {topic.items.map((item, i) => (
-                            <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                            <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
                               <span className="text-gold mt-0.5 shrink-0">•</span>
                               {item}
                             </li>
@@ -573,7 +573,7 @@ export default function SyllabusPage() {
           {syllabus.examTips.map((t, i) => (
             <div key={i} className="flex items-start gap-3 p-3 bg-ink-800 rounded-xl border border-white/[0.05]">
               <span className="text-lg shrink-0">{t.icon}</span>
-              <p className="text-sm text-gray-300 leading-relaxed">{t.tip}</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{t.tip}</p>
             </div>
           ))}
         </div>

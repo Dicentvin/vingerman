@@ -56,7 +56,7 @@ export default function ChatPage() {
   if (!sessionId) return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto animate-fade-in">
       <div className="mb-6">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">German Conversation</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">German Conversation</h1>
         <p className="text-gray-500 text-sm mt-1">Chat with an AI tutor that speaks only German and corrects your mistakes</p>
       </div>
 
@@ -66,7 +66,7 @@ export default function ChatPage() {
           {CEFR_LEVELS.map(l => (
             <button key={l} onClick={() => setSetupLevel(l)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
-                ${setupLevel === l ? 'bg-gold/10 border-gold/40 text-gold' : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-200'}`}>
+                ${setupLevel === l ? 'bg-gold/10 border-gold/40 text-gold' : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-700'}`}>
               {l}
             </button>
           ))}
@@ -82,7 +82,7 @@ export default function ChatPage() {
                 hover:border-gold/30 hover:bg-gold/5 transition-all text-left group">
               <span className="text-2xl">{t.emoji}</span>
               <div>
-                <p className="text-xs font-medium text-gray-200 group-hover:text-gold transition-colors">{t.label}</p>
+                <p className="text-xs font-medium text-gray-700 group-hover:text-gold transition-colors">{t.label}</p>
                 <p className="text-[10px] text-gray-600">{t.topic}</p>
               </div>
             </button>
@@ -102,7 +102,7 @@ export default function ChatPage() {
                 <div key={s._id} className="flex items-center gap-3 p-3 bg-ink-800 rounded-xl">
                   <MessageSquare size={13} className="text-gray-600 shrink-0"/>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-300 truncate">{s.topic}</p>
+                    <p className="text-xs font-medium text-gray-600 truncate">{s.topic}</p>
                     <p className="text-[10px] text-gray-600">{s.messages.length} messages · {s.level}</p>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ export default function ChatPage() {
           <Plus size={16} className="rotate-45"/>
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-200 truncate">{topic}</p>
+          <p className="text-sm font-medium text-gray-700 truncate">{topic}</p>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-soft animate-pulse"/>
             <span className="text-[10px] text-gray-500">Tutor active · {level}</span>
@@ -156,8 +156,8 @@ export default function ChatPage() {
               {/* Main bubble */}
               <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed
                 ${msg.role === 'user'
-                  ? 'bg-gold/10 border border-gold/20 text-gray-100 rounded-tr-sm'
-                  : 'bg-ink-800 border border-white/[0.07] text-gray-200 rounded-tl-sm'}`}>
+                  ? 'bg-gold/10 border border-gold/20 text-gray-800 rounded-tr-sm'
+                  : 'bg-ink-800 border border-white/[0.07] text-gray-700 rounded-tl-sm'}`}>
                 {msg.content}
               </div>
               {/* Speak button for assistant */}

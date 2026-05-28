@@ -71,7 +71,7 @@ export default function FlashcardPage() {
       <div className="min-h-screen p-4 sm:p-6 flex items-center justify-center">
         <div className="card max-w-sm w-full text-center animate-slide-up">
           <Trophy size={48} className="text-gold mx-auto mb-4"/>
-          <h2 className="font-display text-2xl text-gray-100 mb-1">
+          <h2 className="font-display text-2xl text-gray-800 mb-1">
             {sessionResults.length > 0 ? 'Session Complete!' : 'All caught up!'}
           </h2>
           <p className="text-gray-500 text-sm mb-6">
@@ -111,7 +111,7 @@ export default function FlashcardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Flashcards</h1>
+          <h1 className="font-display text-2xl sm:text-3xl text-gray-800">Flashcards</h1>
           <p className="text-gray-500 text-sm">{deck.length} card{deck.length !== 1 ? 's' : ''} due today</p>
         </div>
         <button onClick={handleSync} className="btn-secondary text-xs gap-1.5" disabled={syncing}>
@@ -144,7 +144,7 @@ export default function FlashcardPage() {
             {!flipped ? (
               <>
                 <div className="flex items-center gap-2 mb-3">
-                  <p className="font-display text-3xl sm:text-4xl text-gray-100">{card.de}</p>
+                  <p className="font-display text-3xl sm:text-4xl text-gray-800">{card.de}</p>
                   <button onClick={e => { e.stopPropagation(); speak(card.de) }}
                     className="text-gray-600 hover:text-gold transition-colors">
                     <Volume2 size={18}/>
@@ -162,7 +162,7 @@ export default function FlashcardPage() {
                     <Volume2 size={16}/>
                   </button>
                 </div>
-                <p className="text-gray-200 text-lg sm:text-xl mb-3">{card.en}</p>
+                <p className="text-gray-700 text-lg sm:text-xl mb-3">{card.en}</p>
                 {card.ipa && <p className="text-violet-soft text-xs font-mono mb-3">{card.ipa}</p>}
                 {card.example && (
                   <div className="mt-3 pt-3 border-t border-white/[0.07] text-left">

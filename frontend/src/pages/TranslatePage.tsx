@@ -28,16 +28,16 @@ export default function TranslatePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto animate-fade-in">
       <div className="mb-5">
-        <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Translate</h1>
+        <h1 className="font-display text-2xl sm:text-3xl text-gray-800">Translate</h1>
         <p className="text-gray-500 text-sm mt-1">German ↔ English with grammar explanations</p>
       </div>
 
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-sm font-medium text-gray-300">{from}</span>
+        <span className="text-sm font-medium text-gray-600">{from}</span>
         <button onClick={() => dispatch(setDirection(direction === 'de-en' ? 'en-de' : 'de-en'))} className="btn-ghost p-2">
           <ArrowLeftRight size={16} className="text-gold"/>
         </button>
-        <span className="text-sm font-medium text-gray-300">{to}</span>
+        <span className="text-sm font-medium text-gray-600">{to}</span>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
@@ -59,7 +59,7 @@ export default function TranslatePage() {
             {loading
               ? <span className="text-gray-500 flex items-center gap-2"><span className="spinner"/> Translating…</span>
               : translated
-              ? <span className="text-gray-200">{translated}</span>
+              ? <span className="text-gray-700">{translated}</span>
               : <span className="text-gray-600">Translation appears here…</span>}
           </div>
           {translated && (
@@ -81,10 +81,10 @@ export default function TranslatePage() {
 
       {grammar && (
         <div className="mt-5 card animate-slide-up">
-          <h3 className="font-medium text-gray-200 flex items-center gap-2 mb-3">
+          <h3 className="font-medium text-gray-700 flex items-center gap-2 mb-3">
             <BookOpen size={15} className="text-violet-soft"/> Grammar Breakdown
           </h3>
-          <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
+          <div className="bg-ink-800 rounded-xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
             {grammar}
           </div>
         </div>
