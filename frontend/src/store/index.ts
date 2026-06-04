@@ -9,6 +9,7 @@ import writingReducer    from './slices/writingSlice'
 import flashcardReducer  from './slices/flashcardSlice'
 import chatReducer       from './slices/chatSlice'
 import challengeReducer  from './slices/challengeSlice'
+import grammarReducer    from './slices/grammarSlice'
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     flashcard:  flashcardReducer,
     chat:       chatReducer,
     challenge:  challengeReducer,
+    grammar:    grammarReducer,
   },
 })
 

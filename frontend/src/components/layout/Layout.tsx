@@ -6,7 +6,6 @@ import {
   LayoutDashboard, Mic2, Languages, Volume2, Mic, BookOpen,
   LogOut, Flame, Headphones, PenLine, CreditCard,
   MessageSquare, Trophy, Menu, X, GraduationCap,
-  FolderOpen, Award, ClipboardList,
 } from 'lucide-react'
 
 const navItems = [
@@ -24,6 +23,7 @@ const navItems = [
   { to: '/materials',  icon: FolderOpen,      label: 'My Materials'     },
   { to: '/syllabus',      icon: Award,          label: 'Goethe Prep A1/A2' },
   { to: '/exam-practice', icon: ClipboardList,   label: 'Exam Practice'     },
+  { to: '/grammar-drill',  icon: Grid3X3,        label: 'Grammar Word Drill' },
 ]
 
 export default function Layout() {

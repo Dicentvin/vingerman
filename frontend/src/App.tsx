@@ -20,6 +20,7 @@ import ChallengePage from './pages/ChallengePage'
 import MaterialsPage from './pages/MaterialsPage'
 import SyllabusPage      from './pages/SyllabusPage'
 import ExamPracticePage  from './pages/ExamPracticePage'
+import GrammarDrillPage  from './pages/GrammarDrillPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAppSelector(s => s.auth)
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="materials"     element={<MaterialsPage/>}/>
           <Route path="syllabus"      element={<SyllabusPage/>}/>
           <Route path="exam-practice"  element={<ExamPracticePage/>}/>
+          <Route path="grammar-drill"   element={<GrammarDrillPage/>}/>
         </Route>
         <Route path="*" element={<Navigate to="/" replace/>}/>
       </Routes>

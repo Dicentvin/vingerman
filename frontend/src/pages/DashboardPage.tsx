@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAppSelector } from '../hooks/redux'
-import { Mic2, Languages, Volume2, Mic, BookOpen, Flame, Star, Zap, Headphones, PenLine, CreditCard, MessageSquare, Trophy, FolderOpen, Award, ClipboardList } from 'lucide-react'
+import { Mic2, Languages, Volume2, Mic, BookOpen, Flame, Star, Zap, Headphones, PenLine, CreditCard, MessageSquare, Trophy, FolderOpen, Award, ClipboardList, Grid3X3 } from 'lucide-react'
 
 const features = [
   { to: '/podcast',    icon: Mic2,          label: 'File to Podcast',    desc: 'Convert PDFs & slides to audio',         color: 'text-gold',        bg: 'bg-gold/10' },
@@ -16,6 +16,7 @@ const features = [
   { to: '/materials',  icon: FolderOpen,    label: 'My Materials',        desc: 'Manage uploaded PDFs, PPTX & DOCX',     color: 'text-rose-400',    bg: 'bg-rose-500/10' },
   { to: '/syllabus',      icon: Award,          label: 'Goethe Prep A1/A2',   desc: 'Structured syllabus with progress tracking', color: 'text-amber-400',   bg: 'bg-amber-500/10' },
   { to: '/exam-practice', icon: ClipboardList,  label: 'Exam Practice',       desc: 'Hören · Lesen · Schreiben · Sprechen drills', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { to: '/grammar-drill',  icon: Grid3X3,       label: 'Grammar Word Drill',  desc: 'Nouns, verbs, adjectives — 100 words/day',   color: 'text-lime-400',    bg: 'bg-lime-500/10' },
 ]
 
 export default function DashboardPage() {

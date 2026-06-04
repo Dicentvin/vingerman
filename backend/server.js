@@ -20,6 +20,7 @@ import chatRoutes      from './routes/chatRoutes.js';
 import challengeRoutes from './routes/challengeRoutes.js';
 import syllabusRoutes  from './routes/syllabusRoutes.js';
 import examPracticeRoutes from './routes/examPracticeRoutes.js';
+import grammarRoutes       from './routes/grammarRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -48,6 +49,7 @@ app.use('/api/chat',       chatRoutes);
 app.use('/api/challenge',  challengeRoutes);
 app.use('/api/syllabus',   syllabusRoutes);
 app.use('/api/exam',       examPracticeRoutes);
+app.use('/api/grammar',    grammarRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -55,7 +57,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 German Made Easy Academy API — port ${PORT}`);
-  console.log(`📦 MongoDB · 🔑 JWT · 🤖 Groq · 14 routes registered`);
+  console.log(`📦 MongoDB · 🔑 JWT · 🤖 Groq · 15 routes registered`);
 });
 
 export default app;
