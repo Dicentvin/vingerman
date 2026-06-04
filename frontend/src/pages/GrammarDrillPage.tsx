@@ -8,8 +8,8 @@ import {
 import type { WordCategory, GrammarWord } from '../store/slices/grammarSlice'
 import {
   BookOpen, Zap, Volume2, ChevronDown, ChevronUp,
-  CheckCircle2, Trophy, RotateCcw, BarChart3,
-  Sparkles, Filter, Hash,
+  CheckCircle2, Trophy, RotateCcw, BarChart2,
+  Wand2, Filter, Hash,
 } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -414,7 +414,7 @@ export default function GrammarDrillPage() {
               className="btn-primary w-full justify-center mt-4">
               {generating
                 ? <><span className="spinner"/> Generating {count} {category} words…</>
-                : <><Sparkles size={15}/> Generate {count} {CATEGORIES.find(c=>c.key===category)?.label} Words</>}
+                : <><Wand2 size={15}/> Generate {count} {CATEGORIES.find(c=>c.key===category)?.label} Words</>}
             </button>
           </div>
 
@@ -522,7 +522,7 @@ export default function GrammarDrillPage() {
         <div className="space-y-3">
           {history.length === 0 ? (
             <div className="card text-center py-12">
-              <BarChart3 size={36} className="text-gray-700 mx-auto mb-3"/>
+              <BarChart2 size={36} className="text-gray-700 mx-auto mb-3"/>
               <p className="text-gray-500 text-sm">No history yet — generate your first word set!</p>
             </div>
           ) : (

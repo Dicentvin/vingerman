@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { correctWriting, clearCorrection, fetchWritingHistory } from '../store/slices/writingSlice'
-import { PenLine, CheckCircle2, AlertCircle, Sparkles, RotateCcw, History, ChevronDown, ChevronUp, Volume2 } from 'lucide-react'
+import { PenLine, CheckCircle2, AlertCircle, Wand2, RotateCcw, History, ChevronDown, ChevronUp, Volume2 } from 'lucide-react'
 
 const CEFR_LEVELS = ['A1','A2','B1','B2','C1']
 const DIFF_COLORS: Record<string, string> = {
@@ -78,7 +78,7 @@ export default function WritingPage() {
           <label className="section-label mb-0">Your German Text</label>
           <button onClick={() => { setText(PROMPTS[Math.floor(Math.random()*PROMPTS.length)]); dispatch(clearCorrection()) }}
             className="btn-ghost text-xs gap-1 text-gray-500 hover:text-gold">
-            <Sparkles size={11}/> Try example
+            <Wand2 size={11}/> Try example
           </button>
         </div>
         <textarea className="textarea min-h-[120px] sm:min-h-[140px] text-sm"

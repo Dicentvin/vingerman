@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import {
   BookOpen, CheckCircle2, Circle, ChevronDown, ChevronUp,
   Headphones, FileText, PenLine, Mic, Star, Trophy,
-  ArrowRight, Zap, Target,
+  ArrowRight, Zap, Crosshair,
 } from 'lucide-react'
 import api from '../utils/api'
 
@@ -412,7 +412,7 @@ export default function SyllabusPage() {
 
       {/* Exam Format */}
       <div className="card mb-5">
-        <h3 className="section-label flex items-center gap-2"><Target size={13}/> Exam Format</h3>
+        <h3 className="section-label flex items-center gap-2"><Crosshair size={13}/> Exam Format</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {syllabus.examFormat.map(f => (
             <div key={f.skill} className="bg-ink-800 rounded-xl p-3 border border-white/[0.06]">

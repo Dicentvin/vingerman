@@ -15,7 +15,7 @@ const PHRASES = [
 export default function CoachPage() {
   const dispatch = useAppDispatch()
   const { feedback, score, evalLoading } = useAppSelector(s => s.pronounce)
-  const [target, setTarget]       = useState('Guten Morgen, wie geht es Ihnen?')
+  const [target, setCrosshair]       = useState('Guten Morgen, wie geht es Ihnen?')
   const [spoken, setSpoken]       = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
@@ -63,9 +63,9 @@ export default function CoachPage() {
       </div>
 
       <div className="card mb-4">
-        <label className="section-label">Target Phrase</label>
+        <label className="section-label">Crosshair Phrase</label>
         <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-          <input className="input flex-1 min-w-0" value={target} onChange={e => setTarget(e.target.value)}
+          <input className="input flex-1 min-w-0" value={target} onChange={e => setCrosshair(e.target.value)}
             placeholder="Enter a German phrase…"/>
           <button onClick={() => speak(target)} className="btn-secondary px-3 shrink-0"><Volume2 size={16}/></button>
         </div>
@@ -103,7 +103,7 @@ export default function CoachPage() {
         <h2 className="section-label">Practice Phrases</h2>
         <div className="space-y-1">
           {PHRASES.map(p => (
-            <div key={p.de} onClick={() => setTarget(p.de)}
+            <div key={p.de} onClick={() => setCrosshair(p.de)}
               className="flex items-center gap-3 py-2.5 border-b border-white/[0.05] last:border-0 cursor-pointer hover:bg-ink-800 rounded-lg px-2 -mx-2 transition-all group">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-200 group-hover:text-gold transition-colors truncate">{p.de}</p>

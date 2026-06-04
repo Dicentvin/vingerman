@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Mic, Square, Volume2, RotateCcw, ChevronRight,
   CheckCircle2, XCircle, Trophy, BookOpen, SkipForward,
-  GraduationCap,
+  BookOpen,
 } from 'lucide-react'
 import type { ReadingSegment } from '../../store/slices/readAloudSlice'
 import { SPEECH_MODES, type SpeechMode } from '../../hooks/useGermanTTS'
@@ -453,7 +453,7 @@ export default function TutorSession({
           onClick={() => { runningRef.current = false; setPhase({ name: 'vocab_drill', wordIdx: 0, rep: 1 }) }}
           className="btn-primary w-full justify-center py-3"
         >
-          <GraduationCap size={17}/> Start Vocab Drill → Sentences
+          <BookOpen size={17}/> Start Vocab Drill → Sentences
         </button>
       </div>
     )
@@ -696,7 +696,7 @@ export default function TutorSession({
             {/* Comparison */}
             <div className="space-y-1.5 text-xs bg-black/10 rounded-xl p-3">
               <div className="flex gap-2 flex-wrap">
-                <span className="text-gray-600 shrink-0 w-14">Target:</span>
+                <span className="text-gray-600 shrink-0 w-14">Crosshair:</span>
                 <span className="text-gray-200 font-medium">{seg.text}</span>
               </div>
               <div className="flex gap-2 flex-wrap">

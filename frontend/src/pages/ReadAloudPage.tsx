@@ -3,7 +3,7 @@ import { toast } from 'react-toastify'
 import {
   BookOpen, Wand2, AlignLeft, ChevronDown, ChevronUp,
   FileText, Upload, RefreshCw, Loader2, FileWarning,
-  GraduationCap, Eye,
+  BookOpen, Eye,
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import {
@@ -263,7 +263,7 @@ export default function ReadAloudPage() {
                 ? 'bg-violet-muted border-violet-soft/40 text-violet-soft'
                 : 'bg-ink-800 border-white/[0.07] text-gray-400 hover:text-gray-200 hover:border-white/15'}`}
           >
-            <GraduationCap size={15} /> Tutor Mode
+            <BookOpen size={15} /> Tutor Mode
           </button>
         </div>
 
@@ -492,7 +492,7 @@ export default function ReadAloudPage() {
                                   }}
                                   disabled={loading || !!extractingId}
                                   className="btn-secondary flex-1 text-xs justify-center py-1.5 border-violet-soft/30 text-violet-soft hover:bg-violet-muted">
-                                  <GraduationCap size={12} /> Tutor
+                                  <BookOpen size={12} /> Tutor
                                 </button>
                               )}
                             </div>
@@ -535,7 +535,7 @@ export default function ReadAloudPage() {
                     }}
                     disabled={loading || !customText.trim()}
                     className="btn-secondary px-3 border-violet-soft/30 text-violet-soft hover:bg-violet-muted">
-                    <GraduationCap size={15} />
+                    <BookOpen size={15} />
                   </button>
                 </div>
               </div>

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import {
   Trophy, Headphones, FileText, PenLine, Mic,
-  Sparkles, CheckCircle2, XCircle, RotateCcw,
-  Volume2, ChevronRight, BarChart3, Clock,
+  Wand2, CheckCircle2, XCircle, RotateCcw,
+  Volume2, ChevronRight, BarChart2, Clock,
 } from 'lucide-react'
 import api from '../utils/api'
 import { useAppSelector } from '../hooks/redux'
@@ -384,7 +384,7 @@ export default function ExamPracticePage() {
             {/* Try again */}
             <div className="flex gap-2">
               <button onClick={handleGenerate} className="btn-primary flex-1 justify-center">
-                <Sparkles size={14}/> New Question
+                <Wand2 size={14}/> New Question
               </button>
               <button onClick={() => { setQuestion(null); setResult(null); setAnswer(''); setSelected('') }}
                 className="btn-secondary px-3">
@@ -417,7 +417,7 @@ export default function ExamPracticePage() {
 
       {history.length === 0 ? (
         <div className="card text-center py-12">
-          <BarChart3 size={36} className="text-gray-700 mx-auto mb-3"/>
+          <BarChart2 size={36} className="text-gray-700 mx-auto mb-3"/>
           <p className="text-gray-500 text-sm">No practice history yet</p>
           <p className="text-gray-600 text-xs mt-1">Complete some exercises to see your stats</p>
         </div>
@@ -527,7 +527,7 @@ export default function ExamPracticePage() {
             <button onClick={handleGenerate} className="btn-primary w-full justify-center" disabled={loading}>
               {loading
                 ? <><span className="spinner"/> Generating question…</>
-                : <><Sparkles size={15}/> Generate {level} {SKILLS.find(s=>s.key===skill)?.label} Question</>}
+                : <><Wand2 size={15}/> Generate {level} {SKILLS.find(s=>s.key===skill)?.label} Question</>}
             </button>
           </div>
 
