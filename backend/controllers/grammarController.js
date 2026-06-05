@@ -18,6 +18,8 @@ const wordSchema = new mongoose.Schema({
   superlative:  { type: String, default: '' },
   example:      { type: String, default: '' },
   exampleEn:    { type: String, default: '' },
+  sentences:    [{ type: String }],
+  sentencesEn:  [{ type: String }],
   tip:          { type: String, default: '' },
 }, { _id: false });
 
@@ -49,6 +51,8 @@ For each word include:
 - "plural": plural form with article (e.g. "die Hunde")
 - "example": a short example sentence in German
 - "example_en": English translation of example
+- "sentences": array of 3-5 varied German sentences using this word in different contexts
+- "sentences_en": English translations of each sentence in the same order
 - "tip": memory trick for the gender (optional)`,
 
   verb: `Generate {count} German verbs (mix of regular and irregular).
@@ -60,6 +64,8 @@ For each word include:
 - "conjugations": object with keys ich/du/er/wir/ihr/sie present tense forms
 - "example": example sentence using the verb
 - "example_en": English translation
+- "sentences": array of 3-5 varied German sentences using this verb in different tenses/contexts
+- "sentences_en": English translations of each sentence in the same order
 - "tip": note if irregular, separable, or takes sein in Perfekt`,
 
   adjective: `Generate {count} German adjectives.
@@ -72,6 +78,8 @@ For each word include:
 - "superlative": superlative form (e.g. "am größten")
 - "example": example sentence with the adjective in use
 - "example_en": English translation
+- "sentences": array of 3-5 German sentences showing the adjective with different genders/cases
+- "sentences_en": English translations of each sentence in the same order
 - "tip": usage note or common pairing`,
 
   adverb: `Generate {count} German adverbs (time, manner, place, frequency).
@@ -82,6 +90,8 @@ For each word include:
 - "category": "adverb"
 - "example": example sentence
 - "example_en": English translation
+- "sentences": array of 3-5 varied German sentences using this adverb
+- "sentences_en": English translations of each sentence in the same order
 - "tip": which type of adverb (time/manner/place/frequency)`,
 
   preposition: `Generate {count} German prepositions.
@@ -92,6 +102,8 @@ For each word include:
 - "category": "preposition"
 - "example": example sentence
 - "example_en": English translation
+- "sentences": array of 3-5 German sentences showing this preposition with correct cases
+- "sentences_en": English translations of each sentence in the same order
 - "tip": which case it takes (Accusative / Dative / Genitive / both)`,
 
   conjunction: `Generate {count} German conjunctions (coordinating and subordinating).
@@ -102,6 +114,8 @@ For each word include:
 - "category": "conjunction"
 - "example": example sentence showing word order effect
 - "example_en": English translation
+- "sentences": array of 3-5 German sentences demonstrating this conjunction
+- "sentences_en": English translations of each sentence in the same order
 - "tip": coordinating or subordinating — and the word order rule`,
 
   pronoun: `Generate {count} German pronouns (personal, reflexive, relative, demonstrative).
@@ -112,6 +126,8 @@ For each word include:
 - "category": "pronoun"
 - "example": example sentence
 - "example_en": English translation
+- "sentences": array of 3-5 German sentences showing this pronoun in use
+- "sentences_en": English translations of each sentence in the same order
 - "tip": type of pronoun and its case`,
 
   mixed: `Generate {count} useful German words — mix of nouns, verbs, adjectives, adverbs and prepositions.
@@ -126,6 +142,8 @@ For each word include ALL relevant fields:
 - "comparative"/"superlative": only for adjectives
 - "example": example sentence
 - "example_en": English translation
+- "sentences": array of 3-5 varied German sentences using this word in real contexts
+- "sentences_en": English translations of each sentence in the same order
 - "tip": helpful memory note`,
 };
 
@@ -170,11 +188,17 @@ Do NOT repeat words.`
         ihr: String(w.conjugations.ihr || '').trim(),
         sie: String(w.conjugations.sie || '').trim(),
       } : undefined,
-      comparative: String(w.comparative || '').trim(),
-      superlative: String(w.superlative || '').trim(),
-      example:     String(w.example     || w.example_sentence || '').trim(),
-      exampleEn:   String(w.example_en  || w.exampleEn || '').trim(),
-      tip:         String(w.tip         || '').trim(),
+      comparative:  String(w.comparative || '').trim(),
+      superlative:  String(w.superlative || '').trim(),
+      example:      String(w.example     || w.example_sentence || '').trim(),
+      exampleEn:    String(w.example_en  || w.exampleEn || '').trim(),
+      sentences:    Array.isArray(w.sentences)
+        ? w.sentences.map(s => String(s).trim()).filter(Boolean)
+        : [],
+      sentencesEn:  Array.isArray(w.sentences_en)
+        ? w.sentences_en.map(s => String(s).trim()).filter(Boolean)
+        : [],
+      tip:          String(w.tip || '').trim(),
     })).filter(w => w.de && w.en);
 
     const today = todayStr();

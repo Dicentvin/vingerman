@@ -16,8 +16,10 @@ export interface GrammarWord {
   }
   comparative?: string     // for adjectives
   superlative?: string     // for adjectives
-  example: string          // example sentence
+  example: string          // primary example sentence
   exampleEn: string
+  sentences?: string[]     // 3-5 usage sentences
+  sentencesEn?: string[]   // English translations of sentences
   tip?: string             // memory tip
 }
 
