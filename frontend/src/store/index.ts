@@ -10,6 +10,7 @@ import flashcardReducer  from './slices/flashcardSlice'
 import chatReducer       from './slices/chatSlice'
 import challengeReducer  from './slices/challengeSlice'
 import grammarReducer    from './slices/grammarSlice'
+import storyReducer      from './slices/storySlice'
 
 export const store = configureStore({
   reducer: {
@@ -24,9 +25,10 @@ export const store = configureStore({
     chat:       chatReducer,
     challenge:  challengeReducer,
     grammar:    grammarReducer,
+    story:      storyReducer,
   },
 })
 
-export type AppDispatch    = typeof store.dispatch
-export type AppRootState   = ReturnType<typeof store.getState>
+export type AppDispatch  = typeof store.dispatch
+export type AppRootState = ReturnType<typeof store.getState>
 export default store
