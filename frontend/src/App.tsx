@@ -18,9 +18,11 @@ import FlashcardPage from './pages/FlashcardPage'
 import ChatPage from './pages/ChatPage'
 import ChallengePage from './pages/ChallengePage'
 import MaterialsPage from './pages/MaterialsPage'
-import SyllabusPage      from './pages/SyllabusPage'
-import ExamPracticePage  from './pages/ExamPracticePage'
-import GrammarDrillPage  from './pages/GrammarDrillPage'
+import SyllabusPage from './pages/SyllabusPage'
+import ExamPracticePage from './pages/ExamPracticePage'
+import GrammarDrillPage from './pages/GrammarDrillPage'
+import StoryPage from './pages/StoryPage'
+import ArticleDrillPage from './pages/ArticleDrillPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAppSelector(s => s.auth)
@@ -42,21 +44,23 @@ export default function App() {
         <Route path="/login"    element={<AuthPage mode="login"/>}/>
         <Route path="/register" element={<AuthPage mode="register"/>}/>
         <Route path="/" element={<PrivateRoute><Layout/></PrivateRoute>}>
-          <Route index                element={<DashboardPage/>}/>
-          <Route path="podcast"       element={<PodcastPage/>}/>
-          <Route path="translate"     element={<TranslatePage/>}/>
-          <Route path="pronounce"     element={<PronouncePage/>}/>
-          <Route path="coach"         element={<CoachPage/>}/>
-          <Route path="vocab"         element={<VocabPage/>}/>
-          <Route path="read-aloud"    element={<ReadAloudPage/>}/>
-          <Route path="writing"       element={<WritingPage/>}/>
-          <Route path="flashcards"    element={<FlashcardPage/>}/>
-          <Route path="chat"          element={<ChatPage/>}/>
-          <Route path="challenge"     element={<ChallengePage/>}/>
-          <Route path="materials"     element={<MaterialsPage/>}/>
-          <Route path="syllabus"      element={<SyllabusPage/>}/>
+          <Route index                 element={<DashboardPage/>}/>
+          <Route path="podcast"        element={<PodcastPage/>}/>
+          <Route path="translate"      element={<TranslatePage/>}/>
+          <Route path="pronounce"      element={<PronouncePage/>}/>
+          <Route path="coach"          element={<CoachPage/>}/>
+          <Route path="vocab"          element={<VocabPage/>}/>
+          <Route path="read-aloud"     element={<ReadAloudPage/>}/>
+          <Route path="writing"        element={<WritingPage/>}/>
+          <Route path="flashcards"     element={<FlashcardPage/>}/>
+          <Route path="chat"           element={<ChatPage/>}/>
+          <Route path="challenge"      element={<ChallengePage/>}/>
+          <Route path="materials"      element={<MaterialsPage/>}/>
+          <Route path="syllabus"       element={<SyllabusPage/>}/>
           <Route path="exam-practice"  element={<ExamPracticePage/>}/>
-          <Route path="grammar-drill"   element={<GrammarDrillPage/>}/>
+          <Route path="grammar-drill"  element={<GrammarDrillPage/>}/>
+          <Route path="story"          element={<StoryPage/>}/>
+          <Route path="article-drill"  element={<ArticleDrillPage/>}/>
         </Route>
         <Route path="*" element={<Navigate to="/" replace/>}/>
       </Routes>

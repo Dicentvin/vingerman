@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Mic2, Languages, Volume2, Mic, BookOpen,
   LogOut, Flame, Headphones, PenLine, CreditCard,
   MessageSquare, Trophy, Menu, X, Folder,
-  Star, ClipboardCheck, Grid,
+  Star, ClipboardCheck, Grid, BookMarked, Tag,
 } from 'lucide-react'
 
 const navItems = [
@@ -25,6 +25,8 @@ const navItems = [
   { to: '/syllabus',      icon: Star,            label: 'Goethe Prep A1/A2'   },
   { to: '/exam-practice', icon: ClipboardCheck,  label: 'Exam Practice'       },
   { to: '/grammar-drill', icon: Grid,            label: 'Grammar Word Drill'  },
+  { to: '/story',         icon: BookMarked,      label: 'Story Reader'        },
+  { to: '/article-drill', icon: Tag,             label: 'Article Drill'       },
 ]
 
 export default function Layout() {
@@ -33,14 +35,10 @@ export default function Layout() {
   const user      = useAppSelector(s => s.auth.user)
   const [open, setOpen] = useState(false)
 
-  const handleLogout = () => {
-    dispatch(logoutUser())
-    navigate('/login')
-  }
+  const handleLogout = () => { dispatch(logoutUser()); navigate('/login') }
 
   const SidebarContent = () => (
     <>
-      {/* Logo */}
       <div className="px-5 pt-6 pb-5 border-b border-white/[0.07] flex items-center justify-between">
         <div>
           <h1 className="font-display text-xl text-gold tracking-tight">German Made Easy Academy</h1>
@@ -51,7 +49,6 @@ export default function Layout() {
         </button>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map(({ to, icon: Icon, label, end }) => (
           <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)}
@@ -67,7 +64,6 @@ export default function Layout() {
         ))}
       </nav>
 
-      {/* User */}
       <div className="px-3 pb-4 border-t border-white/[0.07] pt-4">
         <div className="card-sm mb-2">
           <div className="flex items-center gap-3">
@@ -96,12 +92,10 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-60 bg-ink-900 border-r border-white/[0.07] flex-col shrink-0">
         <SidebarContent/>
       </aside>
 
-      {/* Mobile drawer overlay */}
       {open && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)}/>
@@ -111,9 +105,7 @@ export default function Layout() {
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile top bar */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-ink-900 border-b border-white/[0.07] sticky top-0 z-30">
           <button onClick={() => setOpen(true)} className="btn-ghost p-2">
             <Menu size={20}/>
@@ -127,10 +119,7 @@ export default function Layout() {
             </div>
           </div>
         </header>
-
-        <main className="flex-1 overflow-auto">
-          <Outlet/>
-        </main>
+        <main className="flex-1 overflow-auto"><Outlet/></main>
       </div>
     </div>
   )

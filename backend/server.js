@@ -6,21 +6,23 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 
-import authRoutes      from './routes/authRoutes.js';
-import uploadRoutes    from './routes/uploadRoutes.js';
-import podcastRoutes   from './routes/podcastRoutes.js';
-import translateRoutes from './routes/translateRoutes.js';
-import pronounceRoutes from './routes/pronounceRoutes.js';
-import vocabRoutes     from './routes/vocabRoutes.js';
-import progressRoutes  from './routes/progressRoutes.js';
-import readAloudRoutes from './routes/readAloudRoutes.js';
-import writingRoutes   from './routes/writingRoutes.js';
-import flashcardRoutes from './routes/flashcardRoutes.js';
-import chatRoutes      from './routes/chatRoutes.js';
-import challengeRoutes from './routes/challengeRoutes.js';
-import syllabusRoutes  from './routes/syllabusRoutes.js';
+import authRoutes         from './routes/authRoutes.js';
+import uploadRoutes       from './routes/uploadRoutes.js';
+import podcastRoutes      from './routes/podcastRoutes.js';
+import translateRoutes    from './routes/translateRoutes.js';
+import pronounceRoutes    from './routes/pronounceRoutes.js';
+import vocabRoutes        from './routes/vocabRoutes.js';
+import progressRoutes     from './routes/progressRoutes.js';
+import readAloudRoutes    from './routes/readAloudRoutes.js';
+import writingRoutes      from './routes/writingRoutes.js';
+import flashcardRoutes    from './routes/flashcardRoutes.js';
+import chatRoutes         from './routes/chatRoutes.js';
+import challengeRoutes    from './routes/challengeRoutes.js';
+import syllabusRoutes     from './routes/syllabusRoutes.js';
 import examPracticeRoutes from './routes/examPracticeRoutes.js';
-import grammarRoutes       from './routes/grammarRoutes.js';
+import grammarRoutes      from './routes/grammarRoutes.js';
+import storyRoutes        from './routes/storyRoutes.js';
+import articleRoutes      from './routes/articleRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -33,7 +35,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', db: 'mongodb', ts: new Date().toISOString() }));
+app.get('/api/health', (req, res) =>
+  res.json({ status: 'ok', db: 'mongodb', ts: new Date().toISOString() })
+);
 
 app.use('/api/auth',       authRoutes);
 app.use('/api/upload',     uploadRoutes);
@@ -50,6 +54,8 @@ app.use('/api/challenge',  challengeRoutes);
 app.use('/api/syllabus',   syllabusRoutes);
 app.use('/api/exam',       examPracticeRoutes);
 app.use('/api/grammar',    grammarRoutes);
+app.use('/api/story',      storyRoutes);
+app.use('/api/article',    articleRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -57,7 +63,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 German Made Easy Academy API — port ${PORT}`);
-  console.log(`📦 MongoDB · 🔑 JWT · 🤖 Groq · 15 routes registered`);
+  console.log(`📦 MongoDB · 🔑 JWT · 🤖 Groq · 17 routes registered`);
 });
 
 export default app;

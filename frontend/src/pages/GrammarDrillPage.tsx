@@ -28,12 +28,23 @@ const CATEGORIES: {
 ]
 
 const COUNT_OPTIONS = [10, 20, 30, 50, 100]
-const WORDS_PER_PAGE = 1   // full word detail — one per page
 
 const GENDER_COLORS: Record<string, string> = {
   der: 'text-blue-400 bg-blue-500/10 border-blue-400/20',
   die: 'text-pink-400 bg-pink-500/10 border-pink-400/20',
   das: 'text-green-400 bg-green-500/10 border-green-400/20',
+}
+
+// ─── Core speak helper — reads text AS-IS, article included ──────────────────
+// NOTE: we deliberately do NOT strip der/die/das so nouns are read with article
+
+function speakGerman(text: string, rate = 0.82) {
+  speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(text)   // ← NO .replace() — article kept
+  u.lang = 'de-DE'
+  u.rate = rate
+  u.pitch = 1.0
+  speechSynthesis.speak(u)
 }
 
 // ─── Single Word Detail Page ──────────────────────────────────────────────────
@@ -45,53 +56,33 @@ function WordDetail({
   onPrev: () => void; onNext: () => void
   isFirst: boolean; isLast: boolean
 }) {
-  const [showTranslations, setShowTranslations] = useState<Set<number>>(new Set())
   const cardRef = useRef<HTMLDivElement>(null)
   const catInfo = CATEGORIES.find(c => c.key === word.category)
 
-  const speak = (text: string) => {
-    speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(text.replace(/^(der|die|das)\s/i, ''))
-    u.lang = 'de-DE'; u.rate = 0.82
-    speechSynthesis.speak(u)
-  }
-
-  // Scroll to top of card on page change
   useEffect(() => {
     cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    setShowTranslations(new Set())
   }, [globalIndex])
-
-  const toggleTranslation = (idx: number) => {
-    setShowTranslations(prev => {
-      const next = new Set(prev)
-      next.has(idx) ? next.delete(idx) : next.add(idx)
-      return next
-    })
-  }
 
   const progress = Math.round(((globalIndex + 1) / total) * 100)
 
   return (
     <div ref={cardRef} className="space-y-4 animate-fade-in">
 
-      {/* Progress bar + counter */}
+      {/* Progress bar */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-2 bg-ink-700 rounded-full overflow-hidden">
           <div className="h-full bg-gold rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}/>
         </div>
-        <span className="text-xs text-gray-500 shrink-0 font-mono">
-          {globalIndex + 1} / {total}
-        </span>
+        <span className="text-xs text-gray-500 shrink-0 font-mono">{globalIndex + 1} / {total}</span>
       </div>
 
       {/* Main word card */}
       <div className="card">
 
-        {/* Category badge */}
+        {/* Category + gender badges */}
         {catInfo && (
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
             <span className={`text-xs px-3 py-1.5 rounded-full border font-medium ${catInfo.bg} ${catInfo.color}`}>
               {catInfo.emoji} {catInfo.label}
             </span>
@@ -103,34 +94,42 @@ function WordDetail({
           </div>
         )}
 
-        {/* German word — large */}
+        {/* German word — reads WITH article (e.g. "der Hund") */}
         <div className="flex items-start gap-3 mb-2">
           <div className="flex-1">
             <h2 className="font-display text-3xl sm:text-4xl text-gray-100 leading-tight">{word.de}</h2>
-            {word.ipa && (
-              <p className="text-violet-soft font-mono text-sm mt-1">{word.ipa}</p>
-            )}
+            {word.ipa && <p className="text-violet-soft font-mono text-sm mt-1">{word.ipa}</p>}
           </div>
-          <button onClick={() => speak(word.de)}
-            className="btn-secondary p-3 shrink-0 text-gold border-gold/30 hover:bg-gold/10">
+          {/* Speak button — passes full word.de which includes the article */}
+          <button
+            onClick={() => speakGerman(word.de)}
+            className="btn-secondary p-3 shrink-0 text-gold border-gold/30 hover:bg-gold/10"
+            title={`Hear: ${word.de}`}>
             <Volume2 size={20}/>
           </button>
         </div>
 
-        {/* English meaning */}
         <p className="text-xl text-gray-300 mb-4 pb-4 border-b border-white/[0.07]">{word.en}</p>
 
-        {/* NOUN specifics */}
+        {/* NOUN: singular → plural */}
         {word.category === 'noun' && word.plural && (
           <div className="flex items-center gap-4 mb-4 p-3 bg-ink-800 rounded-xl border border-white/[0.06]">
             <div className="text-center">
               <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Singular</p>
-              <p className="text-sm font-semibold text-gray-200">{word.de}</p>
+              <button onClick={() => speakGerman(word.de)}
+                className="text-sm font-semibold text-gray-200 hover:text-gold flex items-center gap-1 group">
+                {word.de}
+                <Volume2 size={11} className="opacity-0 group-hover:opacity-60"/>
+              </button>
             </div>
-            <div className="text-gray-600">→</div>
+            <div className="text-gray-600 text-lg">→</div>
             <div className="text-center">
               <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Plural</p>
-              <p className="text-sm font-semibold text-gray-200">{word.plural}</p>
+              <button onClick={() => speakGerman(word.plural!)}
+                className="text-sm font-semibold text-gray-200 hover:text-gold flex items-center gap-1 group">
+                {word.plural}
+                <Volume2 size={11} className="opacity-0 group-hover:opacity-60"/>
+              </button>
             </div>
           </div>
         )}
@@ -143,22 +142,20 @@ function WordDetail({
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-white/[0.04]">
               {([
-                ['ich',     word.conjugations.ich],
-                ['du',      word.conjugations.du],
+                ['ich',       word.conjugations.ich],
+                ['du',        word.conjugations.du],
                 ['er/sie/es', word.conjugations.er],
-                ['wir',     word.conjugations.wir],
-                ['ihr',     word.conjugations.ihr],
-                ['sie/Sie', word.conjugations.sie],
+                ['wir',       word.conjugations.wir],
+                ['ihr',       word.conjugations.ihr],
+                ['sie/Sie',   word.conjugations.sie],
               ] as [string, string][]).map(([pronoun, form]) => (
                 <div key={pronoun} className="bg-ink-900 px-4 py-3 flex items-center justify-between">
                   <span className="text-xs text-gray-500">{pronoun}</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-semibold text-gray-200">{form}</span>
-                    <button onClick={() => speak(`${pronoun} ${form}`)}
-                      className="text-gray-700 hover:text-gold transition-colors">
-                      <Volume2 size={11}/>
-                    </button>
-                  </div>
+                  <button onClick={() => speakGerman(`${pronoun} ${form}`)}
+                    className="flex items-center gap-1.5 group">
+                    <span className="text-sm font-semibold text-gray-200 group-hover:text-gold transition-colors">{form}</span>
+                    <Volume2 size={11} className="text-gray-700 group-hover:text-gold transition-colors"/>
+                  </button>
                 </div>
               ))}
             </div>
@@ -169,18 +166,17 @@ function WordDetail({
         {word.category === 'adjective' && (word.comparative || word.superlative) && (
           <div className="grid grid-cols-3 gap-2 mb-4">
             {[
-              { label: 'Positiv',      value: word.de,          color: 'text-gray-200' },
-              { label: 'Komparativ',   value: word.comparative, color: 'text-gold' },
-              { label: 'Superlativ',   value: word.superlative, color: 'text-teal-soft' },
-            ].map(item => item.value && (
+              { label: 'Positiv',    value: word.de,          color: 'text-gray-200' },
+              { label: 'Komparativ', value: word.comparative, color: 'text-gold' },
+              { label: 'Superlativ', value: word.superlative, color: 'text-teal-soft' },
+            ].filter(i => i.value).map(item => (
               <div key={item.label} className="bg-ink-800 rounded-xl border border-white/[0.06] p-3 text-center">
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">{item.label}</p>
-                <div className="flex items-center justify-center gap-1">
-                  <p className={`text-base font-semibold ${item.color}`}>{item.value}</p>
-                  <button onClick={() => speak(item.value!)} className="text-gray-700 hover:text-gold">
-                    <Volume2 size={11}/>
-                  </button>
-                </div>
+                <button onClick={() => speakGerman(item.value!)}
+                  className={`text-base font-semibold ${item.color} flex items-center justify-center gap-1 mx-auto group`}>
+                  {item.value}
+                  <Volume2 size={11} className="opacity-0 group-hover:opacity-60"/>
+                </button>
               </div>
             ))}
           </div>
@@ -195,69 +191,49 @@ function WordDetail({
         )}
       </div>
 
-      {/* Example sentences section */}
+      {/* Example sentences */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-gray-200 flex items-center gap-2">
-            <BookOpen size={15} className="text-gold"/>
-            Usage Examples
+            <BookOpen size={15} className="text-gold"/> Usage Examples
           </h3>
           <span className="text-xs text-gray-500">
-            {word.sentences && word.sentences.length > 0
-              ? `${word.sentences.length} sentences`
-              : '1 sentence'}
+            {(word.sentences?.length || 0) + (word.example ? 1 : 0)} sentences
           </span>
         </div>
 
         <div className="space-y-3">
-          {/* Primary example always shown */}
+          {/* Primary example */}
           {word.example && (
-            <SentenceCard
-              index={0}
-              sentence={word.example}
-              translation={word.exampleEn}
-              isPrimary
-              onSpeak={() => speak(word.example)}
-            />
+            <SentenceCard index={0} sentence={word.example} translation={word.exampleEn} isPrimary/>
           )}
-
-          {/* Additional sentences from array */}
-          {word.sentences && word.sentences.map((sentence, i) => (
+          {/* Additional sentences */}
+          {word.sentences?.map((sentence, i) => (
             <SentenceCard
-              key={i}
-              index={i + 1}
+              key={i} index={i + 1}
               sentence={sentence}
               translation={word.sentencesEn?.[i]}
-              onSpeak={() => speak(sentence)}
             />
           ))}
-
-          {/* Fallback if no extra sentences generated yet */}
-          {(!word.sentences || word.sentences.length === 0) && (
-            <div className="text-center py-4 text-gray-600 text-sm">
-              Regenerate the word set to get 3–5 example sentences per word
-            </div>
+          {(!word.sentences || word.sentences.length === 0) && !word.example && (
+            <p className="text-center text-gray-600 text-sm py-4">
+              Regenerate the word set to get example sentences
+            </p>
           )}
         </div>
       </div>
 
-      {/* Navigation controls */}
+      {/* Navigation */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={onPrev}
-          disabled={isFirst}
-          className="btn-secondary flex-1 justify-center py-3 gap-2 disabled:opacity-30 disabled:cursor-not-allowed">
+        <button onClick={onPrev} disabled={isFirst}
+          className="btn-secondary flex-1 justify-center py-3 gap-2 disabled:opacity-30">
           <ChevronLeft size={18}/> Previous
         </button>
-
         <div className="text-center shrink-0">
-          <p className="text-xs text-gray-600">{globalIndex + 1}/{total}</p>
+          <p className="text-xs text-gray-600 font-mono">{globalIndex + 1}/{total}</p>
         </div>
-
-        <button
-          onClick={onNext}
-          disabled={isLast}
-          className="btn-primary flex-1 justify-center py-3 gap-2 disabled:opacity-30 disabled:cursor-not-allowed">
+        <button onClick={onNext} disabled={isLast}
+          className="btn-primary flex-1 justify-center py-3 gap-2 disabled:opacity-30">
           Next <ChevronRight size={18}/>
         </button>
       </div>
@@ -265,7 +241,7 @@ function WordDetail({
       {isLast && (
         <div className="text-center py-3 px-4 bg-teal-muted border border-teal-soft/20 rounded-xl">
           <p className="text-teal-soft text-sm font-medium">🎉 You've reached the last word!</p>
-          <p className="text-gray-500 text-xs mt-0.5">Use the list view below to review or start the quiz</p>
+          <p className="text-gray-500 text-xs mt-0.5">Switch to List view or start the Quiz</p>
         </div>
       )}
     </div>
@@ -275,51 +251,37 @@ function WordDetail({
 // ─── Sentence Card ────────────────────────────────────────────────────────────
 
 function SentenceCard({
-  index, sentence, translation, isPrimary, onSpeak,
+  index, sentence, translation, isPrimary,
 }: {
-  index: number; sentence: string; translation?: string
-  isPrimary?: boolean; onSpeak: () => void
+  index: number; sentence: string; translation?: string; isPrimary?: boolean
 }) {
   const [showTrans, setShowTrans] = useState(false)
 
   return (
-    <div className={`rounded-xl border p-4 transition-all
-      ${isPrimary ? 'bg-gold/5 border-gold/20' : 'bg-ink-800 border-white/[0.06]'}`}>
-
+    <div className={`rounded-xl border p-4 ${isPrimary ? 'bg-gold/5 border-gold/20' : 'bg-ink-800 border-white/[0.06]'}`}>
       <div className="flex items-start gap-3">
-        {/* Sentence number */}
         <span className={`text-[10px] font-mono w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5
           ${isPrimary ? 'bg-gold/20 text-gold' : 'bg-ink-700 text-gray-600'}`}>
           {index + 1}
         </span>
-
         <div className="flex-1 min-w-0">
-          {/* German sentence */}
           <p className={`text-sm leading-relaxed font-medium ${isPrimary ? 'text-gray-100' : 'text-gray-200'}`}>
             {sentence}
           </p>
-
-          {/* Translation — reveal on tap */}
           {translation && (
-            <>
-              {showTrans ? (
-                <p className="text-xs text-teal-soft/80 mt-1.5 italic leading-relaxed">
-                  {translation}
-                </p>
-              ) : (
-                <button
-                  onClick={() => setShowTrans(true)}
-                  className="text-[11px] text-gray-600 hover:text-teal-soft mt-1 transition-colors">
-                  Tap to see translation →
-                </button>
-              )}
-            </>
+            showTrans ? (
+              <p className="text-xs text-teal-soft/80 mt-1.5 italic leading-relaxed">{translation}</p>
+            ) : (
+              <button onClick={() => setShowTrans(true)}
+                className="text-[11px] text-gray-600 hover:text-teal-soft mt-1 transition-colors">
+                Tap to see translation →
+              </button>
+            )
           )}
         </div>
-
-        {/* Speak button */}
-        <button onClick={onSpeak}
-          className="btn-ghost p-1.5 shrink-0 text-gray-600 hover:text-gold transition-colors">
+        {/* Speaks the full sentence — no article stripping */}
+        <button onClick={() => speakGerman(sentence)}
+          className="btn-ghost p-1.5 shrink-0 text-gray-600 hover:text-gold">
           <Volume2 size={14}/>
         </button>
       </div>
@@ -327,20 +289,18 @@ function SentenceCard({
   )
 }
 
-// ─── Compact Word List (overview) ─────────────────────────────────────────────
+// ─── Word List Row ─────────────────────────────────────────────────────────────
 
-function WordListRow({
-  word, index, onClick, isActive,
-}: {
+function WordListRow({ word, index, onClick, isActive }: {
   word: GrammarWord; index: number; onClick: () => void; isActive: boolean
 }) {
   const catInfo = CATEGORIES.find(c => c.key === word.category)
   return (
-    <div
-      onClick={onClick}
+    <div onClick={onClick}
       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all
         ${isActive ? 'bg-gold/10 border border-gold/25' : 'bg-ink-800 border border-white/[0.05] hover:border-white/10'}`}>
-      <span className="text-[10px] font-mono text-gray-600 w-7 text-center">{index + 1}</span>
+      <span className="text-[10px] font-mono text-gray-600 w-7 text-center shrink-0">{index + 1}</span>
+      {/* Full word including article */}
       <span className="text-sm font-medium text-gray-200 flex-1 truncate">{word.de}</span>
       <span className="text-xs text-gray-500 truncate max-w-[100px] hidden sm:block">{word.en}</span>
       {word.gender && (
@@ -359,47 +319,44 @@ export default function GrammarDrillPage() {
   const dispatch = useAppDispatch()
   const { todaySet, history, loading, generating } = useAppSelector(s => s.grammar)
 
-  const [category, setCategory]   = useState<WordCategory>('mixed')
-  const [count, setCount]         = useState(20)
+  const [category, setCategory] = useState<WordCategory>('mixed')
+  const [count, setCount]       = useState(20)
   const [activeTab, setActiveTab] = useState<'study' | 'list' | 'quiz' | 'history'>('study')
   const [currentPage, setCurrentPage] = useState(0)
   const [searchTerm, setSearchTerm]   = useState('')
 
-  // Quiz state
-  const [quizIdx, setQuizIdx]       = useState(0)
+  // Quiz
+  const [quizIdx, setQuizIdx]           = useState(0)
   const [quizRevealed, setQuizRevealed] = useState(false)
-  const [quizScore, setQuizScore]   = useState(0)
-  const [quizDone, setQuizDone]     = useState(false)
+  const [quizScore, setQuizScore]       = useState(0)
+  const [quizDone, setQuizDone]         = useState(false)
 
   useEffect(() => {
     dispatch(fetchTodaySet(category))
     dispatch(fetchHistory())
   }, [dispatch, category])
 
-  // Reset page when word set changes
   useEffect(() => { setCurrentPage(0) }, [todaySet])
 
   const handleGenerate = async () => {
     setCurrentPage(0)
     const result = await dispatch(generateWordSet({ category, count }))
     if (result.error) toast.error(String(result.payload))
-    else {
-      toast.success(`${count} ${category} words ready! 🎉`)
-      setActiveTab('study')
-    }
+    else { toast.success(`${count} ${category} words ready! 🎉`); setActiveTab('study') }
   }
 
-  const words = todaySet?.words || []
+  const words         = todaySet?.words || []
   const filteredWords = words.filter(w =>
     !searchTerm ||
     w.de.toLowerCase().includes(searchTerm.toLowerCase()) ||
     w.en.toLowerCase().includes(searchTerm.toLowerCase())
   )
-
   const currentWord = words[currentPage]
 
   const handleQuizAnswer = async (knew: boolean) => {
     if (knew) setQuizScore(s => s + 1)
+    // Speak the full word with article on reveal
+    speakGerman(words[quizIdx].de)
     if (quizIdx + 1 >= words.length) {
       const finalScore = Math.round(((quizScore + (knew ? 1 : 0)) / words.length) * 100)
       setQuizDone(true)
@@ -414,13 +371,6 @@ export default function GrammarDrillPage() {
     setQuizIdx(0); setQuizRevealed(false)
     setQuizScore(0); setQuizDone(false)
     setActiveTab('study')
-  }
-
-  const speak = (text: string) => {
-    speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(text.replace(/^(der|die|das)\s/i, ''))
-    u.lang = 'de-DE'; u.rate = 0.82
-    speechSynthesis.speak(u)
   }
 
   // ── QUIZ complete ───────────────────────────────────────────────────────────
@@ -438,9 +388,6 @@ export default function GrammarDrillPage() {
               <div className="h-full bg-gold rounded-full transition-all" style={{ width: `${pct}%` }}/>
             </div>
           </div>
-          <p className="text-sm text-gray-400 mb-5">
-            {pct >= 80 ? 'Excellent! You know most of these words.' : pct >= 60 ? 'Good — keep reviewing the ones you missed.' : 'Keep practising — repetition is key!'}
-          </p>
           <div className="flex gap-2">
             <button onClick={resetQuiz} className="btn-primary flex-1 justify-center">
               <BookOpen size={15}/> Back to Study
@@ -471,10 +418,12 @@ export default function GrammarDrillPage() {
           <div className="h-full bg-gold rounded-full transition-all"
             style={{ width: `${(quizIdx / words.length) * 100}%` }}/>
         </div>
+
         <div className="card text-center py-12 mb-4 cursor-pointer"
-          onClick={() => { if (!quizRevealed) { setQuizRevealed(true); speak(qWord.de) } }}>
+          onClick={() => { if (!quizRevealed) { setQuizRevealed(true); speakGerman(qWord.de) } }}>
           {!quizRevealed ? (
             <>
+              {/* Show full word with article in quiz too */}
               <p className="font-display text-5xl text-gray-100 mb-2">{qWord.de}</p>
               {qWord.ipa && <p className="text-violet-soft font-mono">{qWord.ipa}</p>}
               <p className="text-gray-600 text-sm mt-4">Tap to reveal</p>
@@ -482,12 +431,17 @@ export default function GrammarDrillPage() {
           ) : (
             <div className="animate-fade-in">
               <p className="font-display text-3xl text-gold mb-1">{qWord.de}</p>
-              {qWord.gender && <span className={`text-xs px-2 py-0.5 rounded-full border mb-2 inline-block ${GENDER_COLORS[qWord.gender]}`}>{qWord.gender}</span>}
+              {qWord.gender && (
+                <span className={`text-xs px-2 py-0.5 rounded-full border mb-2 inline-block ${GENDER_COLORS[qWord.gender]}`}>
+                  {qWord.gender}
+                </span>
+              )}
               <p className="text-xl text-gray-200 mb-3">{qWord.en}</p>
               {qWord.example && <p className="text-sm text-gray-500 italic">"{qWord.example}"</p>}
             </div>
           )}
         </div>
+
         {quizRevealed ? (
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => handleQuizAnswer(false)}
@@ -500,7 +454,7 @@ export default function GrammarDrillPage() {
             </button>
           </div>
         ) : (
-          <button onClick={() => { setQuizRevealed(true); speak(qWord.de) }}
+          <button onClick={() => { setQuizRevealed(true); speakGerman(qWord.de) }}
             className="btn-primary w-full justify-center py-3">
             <Zap size={15}/> Reveal Answer
           </button>
@@ -512,16 +466,14 @@ export default function GrammarDrillPage() {
   // ── MAIN VIEW ───────────────────────────────────────────────────────────────
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto animate-fade-in">
-
-      {/* Header */}
       <div className="mb-5">
         <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Grammar Word Drill</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Generate up to 100 words with full grammar details and 3–5 example sentences each
+          Generate up to 100 words — nouns read with <span className="text-gold">der/die/das</span> article
         </p>
       </div>
 
-      {/* Generator card */}
+      {/* Generator */}
       <div className="card mb-5">
         <label className="section-label">Word Category</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
@@ -549,8 +501,8 @@ export default function GrammarDrillPage() {
 
         <button onClick={handleGenerate} disabled={generating} className="btn-primary w-full justify-center">
           {generating
-            ? <><span className="spinner"/> Generating {count} {category} words with sentences…</>
-            : <><Wand2 size={15}/> Generate {count} {CATEGORIES.find(c=>c.key===category)?.label} Words</>}
+            ? <><span className="spinner"/> Generating {count} {category} words…</>
+            : <><Wand2 size={15}/> Generate {count} {CATEGORIES.find(c => c.key === category)?.label} Words</>}
         </button>
       </div>
 
@@ -558,31 +510,29 @@ export default function GrammarDrillPage() {
       {(loading || generating) && (
         <div className="card text-center py-12">
           <div className="spinner w-8 h-8 mx-auto mb-3"/>
-          <p className="text-gray-500 text-sm">Generating words with example sentences…</p>
-          <p className="text-gray-600 text-xs mt-1">This may take 10–20 seconds for large sets</p>
+          <p className="text-gray-500 text-sm">Generating words with grammar details and sentences…</p>
         </div>
       )}
 
-      {/* Word set view */}
+      {/* Word set */}
       {!loading && !generating && todaySet && words.length > 0 && (
         <>
-          {/* Set header */}
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="font-display text-xl text-gray-100 capitalize">{todaySet.category} Words</h2>
-                <span className="badge-gold">{words.length} words</span>
-                {todaySet.practiced && <span className="badge-teal gap-1"><CheckCircle2 size={10}/> {todaySet.score}%</span>}
-              </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-display text-xl text-gray-100 capitalize">{todaySet.category} Words</h2>
+              <span className="badge-gold">{words.length} words</span>
+              {todaySet.practiced && (
+                <span className="badge-teal gap-1"><CheckCircle2 size={10}/> {todaySet.score}%</span>
+              )}
             </div>
           </div>
 
-          {/* Tab switcher */}
+          {/* Tabs */}
           <div className="flex rounded-xl bg-ink-800 p-1 gap-1 mb-5">
             {([
               ['study',   '📖 Study'],
-              ['list',    '📋 Word List'],
-              ['quiz',    '⚡ Quick Quiz'],
+              ['list',    '📋 List'],
+              ['quiz',    '⚡ Quiz'],
               ['history', '📊 History'],
             ] as const).map(([k, l]) => (
               <button key={k}
@@ -597,7 +547,7 @@ export default function GrammarDrillPage() {
             ))}
           </div>
 
-          {/* STUDY TAB — paginated one word at a time */}
+          {/* STUDY — one word per page */}
           {activeTab === 'study' && currentWord && (
             <WordDetail
               word={currentWord}
@@ -610,36 +560,28 @@ export default function GrammarDrillPage() {
             />
           )}
 
-          {/* LIST TAB — searchable compact list, click to jump to that word */}
+          {/* LIST — searchable */}
           {activeTab === 'list' && (
             <div className="space-y-3">
               <input className="input text-sm" placeholder="Search words…"
                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
               <p className="text-xs text-gray-600 flex items-center gap-1">
-                <Hash size={11}/> {filteredWords.length} words
-                {searchTerm && ` matching "${searchTerm}"`}
+                <Hash size={11}/> {filteredWords.length} words{searchTerm && ` matching "${searchTerm}"`}
               </p>
               <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
                 {filteredWords.map((w, i) => {
                   const realIdx = words.indexOf(w)
                   return (
-                    <WordListRow
-                      key={`${w.de}-${i}`}
-                      word={w}
-                      index={realIdx}
+                    <WordListRow key={`${w.de}-${i}`} word={w} index={realIdx}
                       isActive={currentPage === realIdx}
-                      onClick={() => {
-                        setCurrentPage(realIdx)
-                        setActiveTab('study')
-                      }}
-                    />
+                      onClick={() => { setCurrentPage(realIdx); setActiveTab('study') }}/>
                   )
                 })}
               </div>
             </div>
           )}
 
-          {/* HISTORY TAB */}
+          {/* HISTORY */}
           {activeTab === 'history' && (
             <div className="space-y-2">
               {history.length === 0 ? (
@@ -655,7 +597,7 @@ export default function GrammarDrillPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-200 capitalize">{h.category} words</p>
                       <p className="text-xs text-gray-500">
-                        {new Date(h.date).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' })}
+                        {new Date(h.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
                       </p>
                     </div>
                     {h.practiced
