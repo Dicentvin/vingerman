@@ -45,19 +45,19 @@ export const generateArticleSet = async (req, res, next) => {
     const safeCount = Math.min(Math.max(5, parseInt(count) || 20), 50);
 
     // Load all words this user has already seen for this topic
-    const seenDocs = await SeenWord.find({ userId: req.userId, topic }).select('word');
+    const seenDocs = await SeenWord.find({ userId: req.userId, topic }).select('word').lean();
     const seenSet  = new Set(seenDocs.map(d => d.word.toLowerCase()));
 
     // Tell AI to exclude already-seen words
     const exclusionHint = seenSet.size > 0
-      ? `\n\nCRITICAL — do NOT include ANY of these words (user has seen them already):\n${[...seenSet].join(', ')}`
+      ? `\n\nCRITICAL — do NOT include ANY of these words (user has already seen them):\n${[...seenSet].slice(0, 200).join(', ')}`
       : '';
 
     // Request extra to survive duplicates inside AI response
-    const requestCount = Math.min(safeCount + 15, 65);
+    const requestCount = Math.min(safeCount + 15, 60);
 
     const parsed = await callGroqJSON(
-      `You are an expert German teacher. Always respond with valid JSON only.`,
+      `You are an expert German teacher. Always respond with valid JSON only — no markdown.`,
       `Generate ${requestCount} UNIQUE German nouns from: ${TOPIC_DESCS[topic] || TOPIC_DESCS.mixed}.
 
 Each word object must have:
@@ -65,23 +65,23 @@ Each word object must have:
 - "en": English meaning
 - "gender": exactly "der", "die", or "das"
 - "plural": plural WITH article (e.g. "die Hunde")
-- "ipa": IPA pronunciation of the noun
-- "category": brief category (e.g. "animal")
-- "tip": memory tip for this gender (max 80 chars)
+- "ipa": IPA pronunciation of the noun only
+- "category": brief category label (e.g. "animal")
+- "tip": a memory tip for this gender (max 80 chars)
 - "example": a natural German sentence using the noun with its correct article
-- "example_en": English translation of example
+- "example_en": English translation of the example
 
-Return JSON: { "words": [ ...array... ] }
+Return JSON object: { "words": [ ...array of ${requestCount} objects... ] }
 
 STRICT rules:
-- Every noun must be COMPLETELY DIFFERENT — zero repetitions
+- Every noun must be COMPLETELY DIFFERENT from each other
 - Balanced mix of der/die/das genders
-- Common useful words for beginners/intermediate learners
-- Helpful gender tips${exclusionHint}`
+- Common useful words for A1-B1 learners
+- Helpful gender memory tips${exclusionHint}`
     );
 
-    const raw = parsed.words || parsed;
-    if (!Array.isArray(raw) || raw.length === 0) {
+    const raw = Array.isArray(parsed) ? parsed : (parsed.words || []);
+    if (!raw || raw.length === 0) {
       return res.status(500).json({ message: 'AI returned no words. Please try again.' });
     }
 
@@ -91,7 +91,8 @@ STRICT rules:
       .map(w => ({
         de:        String(w.de           || '').trim(),
         en:        String(w.en           || '').trim(),
-        gender:    ['der','die','das'].includes(w.gender) ? w.gender : 'der',
+        gender:    ['der','die','das'].includes(String(w.gender).toLowerCase())
+                     ? String(w.gender).toLowerCase() : 'der',
         plural:    String(w.plural       || '').trim(),
         ipa:       String(w.ipa          || '').trim(),
         category:  String(w.category     || topic).trim(),
@@ -100,7 +101,7 @@ STRICT rules:
         exampleEn: String(w.example_en   || w.exampleEn || '').trim(),
       }))
       .filter(w => {
-        if (!w.de || !w.en || !w.gender) return false;
+        if (!w.de || !w.en) return false;
         const key = w.de.toLowerCase();
         if (seenSet.has(key))          return false;  // already seen ever
         if (usedInResponse.has(key))   return false;  // duplicate in this batch
@@ -118,20 +119,25 @@ STRICT rules:
       });
     }
 
-    // Mark new words as seen (upsert — safe if AI slips a duplicate past the filter)
-    await Promise.all(words.map(w =>
-      SeenWord.updateOne(
-        { userId: req.userId, topic, word: w.de.toLowerCase() },
-        { $setOnInsert: { userId: req.userId, topic, word: w.de.toLowerCase() } },
-        { upsert: true }
-      )
-    ));
+    // Mark new words as seen
+    if (words.length > 0) {
+      await Promise.all(words.map(w =>
+        SeenWord.updateOne(
+          { userId: req.userId, topic, word: w.de.toLowerCase() },
+          { $setOnInsert: { userId: req.userId, topic, word: w.de.toLowerCase() } },
+          { upsert: true }
+        ).catch(() => {})   // ignore duplicate key errors
+      ));
+    }
 
     res.json({
       wordSet: { words, topic, count: words.length },
       totalSeen: seenSet.size + words.length,
     });
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('[articleController] generateArticleSet error:', err.message);
+    next(err);
+  }
 };
 
 // ── Save result ───────────────────────────────────────────────────────────────
@@ -141,12 +147,14 @@ export const savePracticed = async (req, res, next) => {
     const { topic, count, score } = req.body;
     const date = new Date().toISOString().split('T')[0];
     await ArticleSession.create({ userId: req.userId, topic, count, score, date });
-    if (score >= 70) await User.findByIdAndUpdate(req.userId, { $inc: { totalXP: 15 } });
+    if (score >= 70) {
+      await User.findByIdAndUpdate(req.userId, { $inc: { totalXP: 15 } });
+    }
     res.json({ message: 'Session saved' });
   } catch (err) { next(err); }
 };
 
-// ── Reset seen words ──────────────────────────────────────────────────────────
+// ── Reset seen words for topic ────────────────────────────────────────────────
 
 export const resetSeen = async (req, res, next) => {
   try {
@@ -162,13 +170,21 @@ export const getHistory = async (req, res, next) => {
   try {
     const history = await ArticleSession.find({ userId: req.userId })
       .sort({ createdAt: -1 }).limit(20)
-      .select('topic count score date createdAt');
+      .select('topic count score date createdAt')
+      .lean();
 
-    const seenCounts = await SeenWord.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(req.userId) } },
-      { $group: { _id: '$topic', count: { $sum: 1 } } },
-    ]);
-    const seenByTopic = Object.fromEntries(seenCounts.map(s => [s._id, s.count]));
+    // Safe ObjectId conversion — handles both string and ObjectId
+    let seenByTopic = {};
+    try {
+      const userObjId = new mongoose.Types.ObjectId(String(req.userId));
+      const seenCounts = await SeenWord.aggregate([
+        { $match: { userId: userObjId } },
+        { $group: { _id: '$topic', count: { $sum: 1 } } },
+      ]);
+      seenByTopic = Object.fromEntries(seenCounts.map(s => [s._id, s.count]));
+    } catch (e) {
+      console.warn('[articleController] seenByTopic aggregation failed:', e.message);
+    }
 
     res.json({ history, seenByTopic });
   } catch (err) { next(err); }
