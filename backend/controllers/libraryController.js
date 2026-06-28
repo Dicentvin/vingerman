@@ -1,16 +1,23 @@
 import Library from '../models/Library.js';
 import StoryLibrary from '../models/StoryLibrary.js';
-── Upsert helper (called internally from other controllers) ──────────────────
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
+
+function oid(id) {
+  try { return new ObjectId(String(id)); } catch { return id; }
+}
+
+// ── Upsert helper (called internally from other controllers) ──────────────────
 // Increments `volume` if word already exists, otherwise inserts it.
 export async function addWordsToLibrary(userId, words) {
   if (!words || words.length === 0) return;
 
   await Promise.allSettled(words.map(w =>
     Library.findOneAndUpdate(
-      { userId, de: w.de.trim() },
+      { userId: oid(userId), de: w.de.trim() },
       {
         $setOnInsert: {
-          userId,
+          userId: oid(userId),
           de:           w.de.trim(),
           en:           w.en?.trim() || '',
           ipa:          w.ipa?.trim() || '',
@@ -50,7 +57,7 @@ export const getLibrary = async (req, res, next) => {
     const skip     = (pageNum - 1) * limitNum;
 
     // Build filter
-    const filter = { userId: req.userId };
+    const filter = { userId: oid(req.userId) };
     if (source)      filter.source      = source;
     if (partOfSpeech) filter.partOfSpeech = partOfSpeech;
     if (search?.trim()) {
@@ -79,7 +86,7 @@ export const getLibrary = async (req, res, next) => {
 
     // Summary stats
     const stats = await Library.aggregate([
-      { $match: { userId: req.userId } },
+      { $match: { userId: oid(req.userId) } },
       { $group: {
         _id: '$partOfSpeech',
         count: { $sum: 1 },
@@ -112,15 +119,15 @@ export const getStats = async (req, res, next) => {
   try {
     const [byPos, bySource, total] = await Promise.all([
       Library.aggregate([
-        { $match: { userId: req.userId } },
+        { $match: { userId: oid(req.userId) } },
         { $group: { _id: '$partOfSpeech', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
       Library.aggregate([
-        { $match: { userId: req.userId } },
+        { $match: { userId: oid(req.userId) } },
         { $group: { _id: '$source', count: { $sum: 1 } } },
       ]),
-      Library.countDocuments({ userId: req.userId }),
+      Library.countDocuments({ userId: oid(req.userId) }),
     ]);
     res.json({ total, byPartOfSpeech: byPos, bySource });
   } catch (err) { next(err); }
@@ -138,9 +145,9 @@ export async function addStoryToLibrary(userId, { title, titleEn, level, topic, 
   const titleKey = normTitle(title);
   try {
     const result = await StoryLibrary.findOneAndUpdate(
-      { userId, titleKey },
+      { userId: oid(userId), titleKey },
       {
-        $setOnInsert: { userId, title, titleEn, level, topic, genre, source, titleKey, passage, passageEn, vocabulary: vocabulary || [], refId },
+        $setOnInsert: { userId: oid(userId), title, titleEn, level, topic, genre, source, titleKey, passage, passageEn, vocabulary: vocabulary || [], refId },
         $inc: { generatedCount: 1 },
       },
       { upsert: true, new: true, rawResult: true }
@@ -155,13 +162,13 @@ export async function addStoryToLibrary(userId, { title, titleEn, level, topic, 
 // ── Check if a title already exists for this user ────────────────────────────
 export async function storyExistsInLibrary(userId, title) {
   const titleKey = normTitle(title);
-  const doc = await StoryLibrary.findOne({ userId, titleKey }).lean();
+  const doc = await StoryLibrary.findOne({ userId: oid(userId), titleKey }).lean();
   return !!doc;
 }
 
 // ── Load all past story titles so AI can avoid them ──────────────────────────
 export async function getPastStoryTitles(userId) {
-  const docs = await StoryLibrary.find({ userId }, 'title topic level').lean();
+  const docs = await StoryLibrary.find({ userId: oid(userId) }, 'title topic level').lean();
   return docs;
 }
 
@@ -173,7 +180,7 @@ export const getStoryLibrary = async (req, res, next) => {
     const limitNum = Math.min(100, Math.max(5, parseInt(limit)));
     const skip     = (pageNum - 1) * limitNum;
 
-    const filter = { userId: req.userId };
+    const filter = { userId: oid(req.userId) };
     if (source) filter.source = source;
     if (level)  filter.level  = level;
     if (search?.trim()) {

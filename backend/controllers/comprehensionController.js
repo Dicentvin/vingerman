@@ -81,72 +81,44 @@ export const generateComprehension = async (req, res, next) => {
       : '';
 
     const parsed = await callGroqJSON(
-      `You are a certified German language examiner writing Goethe-style reading comprehension tests.
-Always respond with valid JSON only — no markdown, no extra text outside the JSON object.`,
+      `You are a German language examiner. Respond with valid JSON only — no markdown, no text outside the JSON.`,
+      `Generate a ${level}-level German reading comprehension test as a single JSON object.
 
-      `Create a ${level}-level German reading comprehension test.
+PASSAGE: Write ${genreLabel} about "${topic}". Use ${cfg.words} words. Style: ${cfg.sentences}. Write in coherent paragraphs.
 
-PASSAGE:
-- Genre: ${genreLabel}
-- Topic: "${topic}"
-- Length: ${cfg.words} words
-- Language: ${cfg.sentences}
-- Write as coherent paragraphs (not a list of sentences)
-- Make it engaging and realistic
+QUESTIONS: Generate exactly ${cfg.qCount} questions. Use this mix:
+- "multiple_choice": question + options ["A) ..","B) ..","C) ..","D) .."] + correctAnswer "A"/"B"/"C"/"D"
+- "true_false": statement + options ["True","False"] + correctAnswer "True"/"False"
+- "short_answer": question + options [] + correctAnswer (1-3 words from text)
+All answers must come directly from the passage. Include an explanation for each.
 
-QUESTIONS:
-Generate exactly ${cfg.qCount} comprehension questions based ONLY on information in the passage.
-Mix these types:
-- Multiple choice (4 options A/B/C/D) — most questions
-- True/False — 1-2 questions  
-- Short answer — 1-2 questions (answer is 1-4 words found directly in the text)
-
-All questions must be answerable from the passage alone.
-Questions must test different parts of the passage.
-Wrong options (distractors) must be plausible but clearly wrong based on the text.
-
-Return ONLY this JSON:
+JSON structure (return EXACTLY this shape, nothing else):
 {
-  "title": "Title in German",
-  "title_en": "English translation of title",
-  "passage": "Full German text as proper paragraphs separated by \\n\\n",
-  "passage_en": "Full English translation of the passage",
-  "vocabulary": [
-    { "de": "word or phrase from passage", "en": "English meaning", "ipa": "[IPA]" }
-  ],
+  "title": "German title",
+  "title_en": "English title",
+  "passage": "German paragraphs separated by double newline",
+  "passage_en": "English translation",
+  "vocabulary": [{"de":"word","en":"meaning","ipa":"[ˈIPA]"}],
   "questions": [
-    {
-      "number": 1,
-      "type": "multiple_choice",
-      "question": "Question in English",
-      "options": ["A) option", "B) option", "C) option", "D) option"],
-      "correctAnswer": "A",
-      "explanation": "The text says '…' which means the answer is A"
-    },
-    {
-      "number": 2,
-      "type": "true_false",
-      "question": "Statement in English — True or False?",
-      "options": ["True", "False"],
-      "correctAnswer": "True",
-      "explanation": "The text states '…'"
-    },
-    {
-      "number": 3,
-      "type": "short_answer",
-      "question": "What did X do? (Answer in 1-3 words from the text)",
-      "options": [],
-      "correctAnswer": "the exact word(s) from the passage in German or English as appropriate",
-      "explanation": "The passage directly states '…'"
-    }
+    {"number":1,"type":"multiple_choice","question":"English question","options":["A) opt","B) opt","C) opt","D) opt"],"correctAnswer":"A","explanation":"Because the text says..."},
+    {"number":2,"type":"true_false","question":"Statement — true or false?","options":["True","False"],"correctAnswer":"True","explanation":"The text states..."},
+    {"number":3,"type":"short_answer","question":"What...? (1-3 words)","options":[],"correctAnswer":"exact words","explanation":"Text says..."}
   ],
   "totalMarks": ${cfg.marks}
-}${exclusionHint}`
+}
+
+Include exactly ${cfg.qCount} question objects. Vocabulary: 6-10 key words.${exclusionHint}`,
+      5000
     );
 
-    // Validate
-    if (!parsed.passage || !Array.isArray(parsed.questions) || parsed.questions.length < 3) {
+    // Validate — be lenient, work with whatever the model returned
+    if (!parsed.passage || !parsed.title) {
+      console.error('[comprehension] Missing passage or title. parsed keys:', Object.keys(parsed));
       return res.status(500).json({ message: 'Generation returned incomplete content. Please try again.' });
+    }
+    if (!Array.isArray(parsed.questions) || parsed.questions.length < 2) {
+      console.error('[comprehension] Too few questions:', parsed.questions?.length);
+      return res.status(500).json({ message: 'Questions were not generated. Please try again.' });
     }
 
     const vocabulary = (parsed.vocabulary || []).slice(0, 12).map(v => ({
@@ -193,7 +165,10 @@ Return ONLY this JSON:
     await User.findByIdAndUpdate(req.userId, { $inc: { totalXP: 5 } });
 
     res.status(201).json({ comprehension: doc });
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('[comprehension] generateComprehension error:', err.message);
+    next(err);
+  }
 };
 
 // ── Submit answers ─────────────────────────────────────────────────────────────

@@ -5,12 +5,13 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 router.use(protect);
 
-router.get('/',       getLibrary);
-router.get('/stats',  getStats);
-router.delete('/:id', deleteWord);
-
-// Story library
+// Static routes FIRST (before any :param wildcards)
+router.get('/stats',         getStats);
 router.get('/stories',       getStoryLibrary);
 router.delete('/stories/:id', deleteStory);
+
+// General word library
+router.get('/',       getLibrary);
+router.delete('/:id', deleteWord);
 
 export default router;
