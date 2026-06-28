@@ -3,7 +3,7 @@ import { useAppSelector } from '../hooks/redux'
 import {
   Mic2, Languages, Volume2, Mic, BookOpen, Flame, Star, Zap,
   Headphones, PenLine, CreditCard, MessageSquare, Trophy,
-  Folder, ClipboardCheck, Grid, BookMarked, Tag,
+  Folder, ClipboardCheck, Grid, BookMarked, Tag, LibraryBig, GraduationCap,
 } from 'lucide-react'
 
 const features = [
@@ -23,6 +23,8 @@ const features = [
   { to: '/grammar-drill', icon: Grid,          label: 'Grammar Word Drill',   desc: 'Nouns, verbs, adjectives — 100 words/day',    color: 'text-lime-400',    bg: 'bg-lime-500/10' },
   { to: '/story',         icon: BookMarked,    label: 'Story Reader',         desc: 'AI stories at beginner to native speed',      color: 'text-purple-400',  bg: 'bg-purple-500/10' },
   { to: '/article-drill', icon: Tag,           label: 'Article Drill',        desc: 'Master der · die · das with no repetitions', color: 'text-sky-400',     bg: 'bg-sky-500/10' },
+  { to: '/library',       icon: LibraryBig,    label: 'Word Library',         desc: 'Every word you\'ve generated — no duplicates', color: 'text-teal-soft',   bg: 'bg-teal-muted' },
+  { to: '/comprehension', icon: GraduationCap, label: 'Comprehension',        desc: 'Read passages and answer exam-style questions', color: 'text-violet-soft', bg: 'bg-violet-muted' },
 ]
 
 export default function DashboardPage() {

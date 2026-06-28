@@ -23,6 +23,8 @@ import ExamPracticePage from './pages/ExamPracticePage'
 import GrammarDrillPage from './pages/GrammarDrillPage'
 import StoryPage from './pages/StoryPage'
 import ArticleDrillPage from './pages/ArticleDrillPage'
+import LibraryPage from './pages/LibraryPage'
+import ComprehensionPage from './pages/ComprehensionPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAppSelector(s => s.auth)
@@ -61,6 +63,8 @@ export default function App() {
           <Route path="grammar-drill"  element={<GrammarDrillPage/>}/>
           <Route path="story"          element={<StoryPage/>}/>
           <Route path="article-drill"  element={<ArticleDrillPage/>}/>
+          <Route path="library"        element={<LibraryPage/>}/>
+          <Route path="comprehension"   element={<ComprehensionPage/>}/>
         </Route>
         <Route path="*" element={<Navigate to="/" replace/>}/>
       </Routes>

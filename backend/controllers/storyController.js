@@ -1,4 +1,5 @@
 import { callGroqJSON } from '../config/groq.js';
+import { addStoryToLibrary, getPastStoryTitles } from './libraryController.js';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 
@@ -48,6 +49,12 @@ export const generateStory = async (req, res, next) => {
     const levelGuide = LEVEL_GUIDES[level] || LEVEL_GUIDES.A2;
     const genreDesc  = GENRE_DESCRIPTIONS[genre] || GENRE_DESCRIPTIONS.story;
 
+    // Load past story titles so AI avoids repeating them
+    const pastStories = await getPastStoryTitles(req.userId);
+    const exclusionHint = pastStories.length > 0
+      ? `\n\nCRITICAL — do NOT use any of these titles or the same storyline (user has already seen them):\n${pastStories.map(s => `"${s.title}" (${s.topic})`).slice(0, 50).join(', ')}`
+      : '';
+
     const parsed = await callGroqJSON(
       `You are an expert German language teacher creating graded reading stories for learners.
 Always respond with valid JSON only — no markdown, no preamble, no explanation outside the JSON.`,
@@ -62,6 +69,7 @@ Requirements:
 - Every line must have a German original AND an accurate English translation
 - Notes are optional — only add when there is a genuinely useful grammar tip (max 60 chars)
 - The story must be coherent, engaging and appropriate for ${level}
+- Use a UNIQUE title and plot — do not repeat any story the user has seen before
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -86,7 +94,7 @@ Return ONLY a JSON object with this exact structure:
 
 - Produce EXACTLY 20 line objects numbered 1-20
 - Vocabulary: 8-15 words from the story a ${level} learner should know
-- Make it genuinely interesting to read, not just a list of sentences`
+- Make it genuinely interesting to read, not just a list of sentences${exclusionHint}`
     );
 
     if (!parsed.lines || parsed.lines.length < 10) {
@@ -106,12 +114,23 @@ Return ONLY a JSON object with this exact structure:
       ipa: String(v.ipa || '').trim(),
     })).filter(v => v.de && v.en);
 
+    const title   = String(parsed.title    || `${genre} — ${topic}`).trim();
+    const titleEn = String(parsed.title_en || '').trim();
+
     const story = await Story.create({
-      userId:  req.userId,
-      title:   String(parsed.title    || `${genre} — ${topic}`).trim(),
-      titleEn: String(parsed.title_en || '').trim(),
-      level, topic, genre, lines, vocabulary,
+      userId: req.userId,
+      title, titleEn, level, topic, genre, lines, vocabulary,
     });
+
+    // Save to story library — deduplication happens inside addStoryToLibrary
+    await addStoryToLibrary(req.userId, {
+      title, titleEn, level, topic, genre,
+      source:     'story',
+      passage:    lines.map(l => l.de).join(' '),
+      passageEn:  lines.map(l => l.en).join(' '),
+      vocabulary,
+      refId:      story._id,
+    }).catch(() => {});
 
     await User.findByIdAndUpdate(req.userId, { $inc: { totalXP: 10 } });
 

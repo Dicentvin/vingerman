@@ -323,6 +323,8 @@ export default function GrammarDrillPage() {
   const [count, setCount]       = useState(20)
   const [activeTab, setActiveTab] = useState<'study' | 'list' | 'quiz' | 'history'>('study')
   const [currentPage, setCurrentPage] = useState(0)
+  const [listPage, setListPage]         = useState(1)
+  const LIST_PER_PAGE = 15
   const [searchTerm, setSearchTerm]   = useState('')
 
   // Quiz
@@ -346,6 +348,9 @@ export default function GrammarDrillPage() {
   }
 
   const words         = todaySet?.words || []
+  // Reset list page on search
+  useEffect(() => { setListPage(1) }, [searchTerm])
+
   const filteredWords = words.filter(w =>
     !searchTerm ||
     w.de.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -560,26 +565,53 @@ export default function GrammarDrillPage() {
             />
           )}
 
-          {/* LIST — searchable */}
-          {activeTab === 'list' && (
-            <div className="space-y-3">
-              <input className="input text-sm" placeholder="Search words…"
-                value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
-              <p className="text-xs text-gray-600 flex items-center gap-1">
-                <Hash size={11}/> {filteredWords.length} words{searchTerm && ` matching "${searchTerm}"`}
-              </p>
-              <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
-                {filteredWords.map((w, i) => {
-                  const realIdx = words.indexOf(w)
-                  return (
-                    <WordListRow key={`${w.de}-${i}`} word={w} index={realIdx}
-                      isActive={currentPage === realIdx}
-                      onClick={() => { setCurrentPage(realIdx); setActiveTab('study') }}/>
-                  )
-                })}
+          {/* LIST — searchable + paginated */}
+          {activeTab === 'list' && (() => {
+            const listTotalPages = Math.ceil(filteredWords.length / LIST_PER_PAGE)
+            const pagedWords = filteredWords.slice((listPage - 1) * LIST_PER_PAGE, listPage * LIST_PER_PAGE)
+            return (
+              <div className="space-y-3">
+                <input className="input text-sm" placeholder="Search words…"
+                  value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-600 flex items-center gap-1">
+                    <Hash size={11}/> {filteredWords.length} words{searchTerm && ` matching "${searchTerm}"`}
+                  </p>
+                  {listTotalPages > 1 && (
+                    <span className="text-xs text-gray-600">Page {listPage}/{listTotalPages}</span>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  {pagedWords.map((w, i) => {
+                    const realIdx = words.indexOf(w)
+                    return (
+                      <WordListRow key={`${w.de}-${i}`} word={w} index={realIdx}
+                        isActive={currentPage === realIdx}
+                        onClick={() => { setCurrentPage(realIdx); setActiveTab('study') }}/>
+                    )
+                  })}
+                </div>
+                {listTotalPages > 1 && (
+                  <div className="flex items-center justify-center gap-1 pt-2 border-t border-white/[0.06]">
+                    <button onClick={() => setListPage(p => Math.max(1, p - 1))} disabled={listPage === 1}
+                      className="btn-ghost px-2 py-1 text-xs disabled:opacity-30">‹ Prev</button>
+                    {Array.from({ length: Math.min(7, listTotalPages) }, (_, idx) => {
+                      const start = Math.max(1, Math.min(listPage - 3, listTotalPages - 6))
+                      return start + idx
+                    }).map(p => (
+                      <button key={p} onClick={() => setListPage(p)}
+                        className={`w-7 h-7 rounded-lg text-xs font-medium transition-all
+                          ${p === listPage ? 'bg-gold/10 text-gold border border-gold/30' : 'btn-ghost text-gray-500'}`}>
+                        {p}
+                      </button>
+                    ))}
+                    <button onClick={() => setListPage(p => Math.min(listTotalPages, p + 1))} disabled={listPage === listTotalPages}
+                      className="btn-ghost px-2 py-1 text-xs disabled:opacity-30">Next ›</button>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* HISTORY */}
           {activeTab === 'history' && (

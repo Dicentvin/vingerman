@@ -23,6 +23,8 @@ import examPracticeRoutes from './routes/examPracticeRoutes.js';
 import grammarRoutes      from './routes/grammarRoutes.js';
 import storyRoutes        from './routes/storyRoutes.js';
 import articleRoutes      from './routes/articleRoutes.js';
+import libraryRoutes      from './routes/libraryRoutes.js';
+import comprehensionRoutes from './routes/comprehensionRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -56,6 +58,8 @@ app.use('/api/exam',       examPracticeRoutes);
 app.use('/api/grammar',    grammarRoutes);
 app.use('/api/story',      storyRoutes);
 app.use('/api/article',    articleRoutes);
+app.use('/api/library',    libraryRoutes);
+app.use('/api/comprehension', comprehensionRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

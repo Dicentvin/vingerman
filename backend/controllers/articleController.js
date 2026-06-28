@@ -1,6 +1,7 @@
 import { callGroqJSON } from '../config/groq.js';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
+import { addWordsToLibrary } from './libraryController.js';
 
 // ── Models ────────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,14 @@ STRICT rules:
           { upsert: true }
         ).catch(() => {})   // ignore duplicate key errors
       ));
+
+      // Save to library (deduplication via volume tracking)
+      await addWordsToLibrary(req.userId, words.map(w => ({
+        ...w,
+        de: w.gender + ' ' + w.de,
+        source: 'article',
+        partOfSpeech: 'noun',
+      }))).catch(() => {});
     }
 
     res.json({

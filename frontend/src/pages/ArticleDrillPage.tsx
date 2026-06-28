@@ -470,24 +470,51 @@ export default function ArticleDrillPage() {
                     )}
                   </div>
 
-                  {/* All words overview */}
-                  <div className="card">
-                    <p className="section-label">All {words.length} Nouns</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-64 overflow-y-auto">
-                      {words.map((w, i) => {
-                        const gc = GENDER_CONFIG[w.gender]
-                        return (
-                          <button key={i} onClick={() => { setLearnIdx(i); setShowAnswer(false) }}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-all text-xs
-                              ${learnIdx === i ? 'bg-gold/10 border border-gold/25' : 'bg-ink-800 border border-white/[0.05] hover:border-white/10'}`}>
-                            <span className={`font-bold shrink-0 ${gc.color}`}>{w.gender}</span>
-                            <span className="text-gray-200 truncate flex-1">{w.de}</span>
-                            <span className="text-gray-600 truncate max-w-[80px] hidden sm:block">{w.en}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
+                  {/* All words overview — paginated */}
+                  {(() => {
+                    const totalPages = Math.ceil(words.length / WORDS_PER_PAGE)
+                    const pageWords  = words.slice((overviewPage - 1) * WORDS_PER_PAGE, overviewPage * WORDS_PER_PAGE)
+                    return (
+                      <div className="card">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="section-label">All {words.length} Nouns</p>
+                          {totalPages > 1 && (
+                            <span className="text-xs text-gray-600">Page {overviewPage}/{totalPages}</span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                          {pageWords.map((w, localIdx) => {
+                            const i = (overviewPage - 1) * WORDS_PER_PAGE + localIdx
+                            const gc = GENDER_CONFIG[w.gender]
+                            return (
+                              <button key={i} onClick={() => { setLearnIdx(i); setShowAnswer(false) }}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-all text-xs
+                                  ${learnIdx === i ? 'bg-gold/10 border border-gold/25' : 'bg-ink-800 border border-white/[0.05] hover:border-white/10'}`}>
+                                <span className={`font-bold shrink-0 ${gc.color}`}>{w.gender}</span>
+                                <span className="text-gray-200 truncate flex-1">{w.de}</span>
+                                <span className="text-gray-600 truncate max-w-[80px] hidden sm:block">{w.en}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-center gap-1 mt-3 pt-3 border-t border-white/[0.06]">
+                            <button onClick={() => setOverviewPage(p => Math.max(1, p - 1))} disabled={overviewPage === 1}
+                              className="btn-ghost px-2 py-1 text-xs disabled:opacity-30">‹ Prev</button>
+                            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(p => (
+                              <button key={p} onClick={() => setOverviewPage(p)}
+                                className={`w-7 h-7 rounded-lg text-xs font-medium transition-all
+                                  ${p === overviewPage ? 'bg-gold/10 text-gold border border-gold/30' : 'btn-ghost text-gray-500'}`}>
+                                {p}
+                              </button>
+                            ))}
+                            <button onClick={() => setOverviewPage(p => Math.min(totalPages, p + 1))} disabled={overviewPage === totalPages}
+                              className="btn-ghost px-2 py-1 text-xs disabled:opacity-30">Next ›</button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
 

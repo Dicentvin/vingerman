@@ -1,4 +1,6 @@
 import { callGroqJSON } from '../config/groq.js';
+import { addWordsToLibrary } from './libraryController.js';
+import Library from '../models/Library.js';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 
@@ -153,19 +155,33 @@ export const generateWordSet = async (req, res, next) => {
     const { category = 'mixed', count = 100 } = req.body;
     const safeCount = Math.min(Math.max(10, parseInt(count) || 100), 100);
 
+    // ── Deduplication: load all words this user has ever seen for this category ──
+    const seenDocs = await Library.find(
+      { userId: req.userId, partOfSpeech: category === 'mixed' ? { $exists: true } : category },
+      'de'
+    ).lean();
+    const seenSet = new Set(seenDocs.map(d => d.de.toLowerCase().replace(/^(der|die|das)\s+/i, '')));
+
+    const exclusionHint = seenSet.size > 0
+      ? `\n\nCRITICAL — do NOT include ANY of these words (user has already seen them):\n${[...seenSet].slice(0, 300).join(', ')}`
+      : '';
+
+    // Request extra words to compensate for AI duplication
+    const requestCount = Math.min(safeCount + 20, 120);
+
     const promptTemplate = CATEGORY_PROMPTS[category] || CATEGORY_PROMPTS.mixed;
-    const prompt = promptTemplate.replace('{count}', safeCount);
+    const prompt = promptTemplate.replace('{count}', requestCount);
 
     const parsed = await callGroqJSON(
       `You are an expert German language teacher. Generate vocabulary lists with complete grammatical information.
 Always respond with valid JSON only — a single object with a "words" array.`,
       `${prompt}
 
-Return a JSON object: { "words": [ ...array of ${safeCount} word objects... ] }
+Return a JSON object: { "words": [ ...array of ${requestCount} word objects... ] }
 
 Make the words varied and genuinely useful for German learners.
 Cover different difficulty levels — mix common everyday words with some intermediate ones.
-Do NOT repeat words.`
+Do NOT repeat words.${exclusionHint}`
     );
 
     const rawWords = parsed.words || parsed;
@@ -173,6 +189,8 @@ Do NOT repeat words.`
       return res.status(500).json({ message: 'AI returned no words. Please try again.' });
     }
 
+    // Normalise + deduplicate (against library AND within this batch)
+    const usedInBatch = new Set();
     const words = rawWords.map(w => ({
       de:          String(w.de || '').trim(),
       en:          String(w.en || '').trim(),
@@ -199,19 +217,43 @@ Do NOT repeat words.`
         ? w.sentences_en.map(s => String(s).trim()).filter(Boolean)
         : [],
       tip:          String(w.tip || '').trim(),
-    })).filter(w => w.de && w.en);
+    }))
+    .filter(w => {
+      if (!w.de || !w.en) return false;
+      const key = w.de.toLowerCase().replace(/^(der|die|das)\s+/i, '');
+      if (seenSet.has(key))        return false;  // already in library
+      if (usedInBatch.has(key))    return false;  // duplicate within batch
+      usedInBatch.add(key);
+      return true;
+    })
+    .slice(0, safeCount);
+
+    if (words.length === 0) {
+      return res.status(200).json({
+        wordSet: { words: [], category, count: 0 },
+        allSeen: true,
+        totalSeen: seenSet.size,
+        message: 'You have seen all available words in this category! Your library is complete for now.',
+      });
+    }
 
     const today = todayStr();
-    // Delete existing set for today + category if regenerating
     await WordSet.deleteOne({ userId: req.userId, date: today, category });
 
     const wordSet = await WordSet.create({
       userId: req.userId, date: today, category, words,
     });
 
+    // Save new words to library — this IS the deduplication store going forward
+    await addWordsToLibrary(req.userId, words.map(w => ({
+      ...w,
+      source: 'grammar',
+      partOfSpeech: w.category || category,
+    }))).catch(() => {});
+
     await User.findByIdAndUpdate(req.userId, { $inc: { totalXP: 5 } });
 
-    res.json({ wordSet });
+    res.json({ wordSet, totalSeen: seenSet.size + words.length });
   } catch (err) { next(err); }
 };
 
