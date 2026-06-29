@@ -50,7 +50,7 @@ const TOPICS = [
   { key: 'school',      label: '📚 School',          desc: 'Schule' },
 ]
 
-const COUNT_OPTIONS = [10, 20, 30, 50]
+const COUNT_OPTIONS = [10, 20, 30, 50, 100]
 
 const GENDER_CONFIG = {
   der: { color: 'text-blue-400',  bg: 'bg-blue-500/10',  border: 'border-blue-400/40',  label: 'der',  full: 'Masculine' },

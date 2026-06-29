@@ -172,6 +172,8 @@ export const generateWordSet = async (req, res, next) => {
     const promptTemplate = CATEGORY_PROMPTS[category] || CATEGORY_PROMPTS.mixed;
     const prompt = promptTemplate.replace('{count}', requestCount);
 
+    // Scale tokens: ~60 tokens per word for full JSON with conjugations/examples
+    const tokensNeeded = Math.min(8000, Math.max(3000, requestCount * 65));
     const parsed = await callGroqJSON(
       `You are an expert German language teacher. Generate vocabulary lists with complete grammatical information.
 Always respond with valid JSON only — a single object with a "words" array.`,
@@ -181,7 +183,8 @@ Return a JSON object: { "words": [ ...array of ${requestCount} word objects... ]
 
 Make the words varied and genuinely useful for German learners.
 Cover different difficulty levels — mix common everyday words with some intermediate ones.
-Do NOT repeat words.${exclusionHint}`
+Do NOT repeat words.${exclusionHint}`,
+      tokensNeeded
     );
 
     const rawWords = parsed.words || parsed;

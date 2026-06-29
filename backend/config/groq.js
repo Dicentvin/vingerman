@@ -20,6 +20,7 @@ export const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
 };
 
 export const callGroqJSON = async (systemPrompt, userPrompt, maxTokens = 4000) => {
+  maxTokens = Math.min(8192, Math.max(1500, maxTokens)); // Groq limit
   const completion = await groq.chat.completions.create({
     model: MODEL,
     max_tokens: maxTokens,

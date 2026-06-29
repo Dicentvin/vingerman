@@ -49,7 +49,7 @@ export const getLibrary = async (req, res, next) => {
       source,          // 'article' | 'grammar' | 'vocab'
       partOfSpeech,    // noun | verb | adjective ...
       search,          // free-text search on de/en
-      sort = 'newest', // newest | oldest | az | za | volume
+      sort = 'az',     // newest | oldest | az | za | volume
     } = req.query;
 
     const pageNum  = Math.max(1, parseInt(page));

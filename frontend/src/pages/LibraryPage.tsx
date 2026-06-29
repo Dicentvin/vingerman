@@ -238,7 +238,7 @@ export default function LibraryPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filterPos, setFilterPos]     = useState('')
   const [filterSource, setFilterSource] = useState('')
-  const [sort, setSort]               = useState('newest')
+  const [sort, setSort]               = useState('az')
   const [page, setPage]               = useState(1)
   const [limit, setLimit]             = useState(30)
 
@@ -324,7 +324,7 @@ export default function LibraryPage() {
     setSearch(''); setFilterPos(''); setFilterSource(''); setSort('newest'); setPage(1)
   }
 
-  const hasFilters = search || filterPos || filterSource || sort !== 'newest'
+  const hasFilters = search || filterPos || filterSource || sort !== 'az'
 
   // ── Render ─────────────────────────────────────────────────────────────────
 

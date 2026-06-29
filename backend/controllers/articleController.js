@@ -43,7 +43,7 @@ const TOPIC_DESCS = {
 export const generateArticleSet = async (req, res, next) => {
   try {
     const { topic = 'mixed', count = 20 } = req.body;
-    const safeCount = Math.min(Math.max(5, parseInt(count) || 20), 50);
+    const safeCount = Math.min(Math.max(5, parseInt(count) || 20), 100);
 
     // Load all words this user has already seen for this topic
     const seenDocs = await SeenWord.find({ userId: req.userId, topic }).select('word').lean();
@@ -55,8 +55,9 @@ export const generateArticleSet = async (req, res, next) => {
       : '';
 
     // Request extra to survive duplicates inside AI response
-    const requestCount = Math.min(safeCount + 15, 60);
+    const requestCount = Math.min(safeCount + 20, 120);
 
+    const tokensNeeded = Math.min(8000, Math.max(3000, requestCount * 60));
     const parsed = await callGroqJSON(
       `You are an expert German teacher. Always respond with valid JSON only — no markdown.`,
       `Generate ${requestCount} UNIQUE German nouns from: ${TOPIC_DESCS[topic] || TOPIC_DESCS.mixed}.
@@ -78,7 +79,8 @@ STRICT rules:
 - Every noun must be COMPLETELY DIFFERENT from each other
 - Balanced mix of der/die/das genders
 - Common useful words for A1-B1 learners
-- Helpful gender memory tips${exclusionHint}`
+- Helpful gender memory tips${exclusionHint}`,
+      tokensNeeded
     );
 
     const raw = Array.isArray(parsed) ? parsed : (parsed.words || []);

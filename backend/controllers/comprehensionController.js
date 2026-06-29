@@ -50,11 +50,11 @@ const Comprehension = mongoose.models.Comprehension ||
 // ── Level config ──────────────────────────────────────────────────────────────
 
 const LEVEL_CONFIG = {
-  A1: { words: '80-100',  sentences: 'very short (max 6 words), present tense only, most common 500 words', qCount: 5,  marks: 5  },
-  A2: { words: '120-150', sentences: 'simple, max 10 words, present + simple past',                          qCount: 6,  marks: 6  },
-  B1: { words: '180-220', sentences: 'medium complexity, varied tenses, subordinate clauses',                 qCount: 8,  marks: 8  },
-  B2: { words: '250-300', sentences: 'complex sentences, idiomatic expressions, all tenses',                  qCount: 10, marks: 10 },
-  C1: { words: '320-380', sentences: 'advanced, nuanced, near-native vocabulary and syntax',                  qCount: 10, marks: 10 },
+  A1: { words: '450-500',  sentences: 'very short simple sentences (max 8 words each), present tense only, most common 500 words, beginner vocabulary', qCount: 5,  marks: 5  },
+  A2: { words: '450-520',  sentences: 'simple clear sentences, max 12 words each, present and simple past tense, elementary vocabulary',                  qCount: 6,  marks: 6  },
+  B1: { words: '480-550',  sentences: 'medium complexity, varied tenses including perfect and future, subordinate clauses, intermediate vocabulary',       qCount: 8,  marks: 8  },
+  B2: { words: '500-580',  sentences: 'complex sentences, idiomatic expressions, all tenses, upper-intermediate vocabulary and nuance',                    qCount: 10, marks: 10 },
+  C1: { words: '520-600',  sentences: 'advanced sophisticated prose, nuanced vocabulary, complex syntax, near-native expression and idiom',                qCount: 10, marks: 10 },
 };
 
 const GENRE_LABELS = {
@@ -84,7 +84,7 @@ export const generateComprehension = async (req, res, next) => {
       `You are a German language examiner. Respond with valid JSON only — no markdown, no text outside the JSON.`,
       `Generate a ${level}-level German reading comprehension test as a single JSON object.
 
-PASSAGE: Write ${genreLabel} about "${topic}". Use ${cfg.words} words. Style: ${cfg.sentences}. Write in coherent paragraphs.
+PASSAGE: Write ${genreLabel} about "${topic}". The passage MUST be AT LEAST 450 words long (target: ${cfg.words} words). Style: ${cfg.sentences}. Write in coherent, well-developed paragraphs with rich detail and description — do not write a short passage.
 
 QUESTIONS: Generate exactly ${cfg.qCount} questions. Use this mix:
 - "multiple_choice": question + options ["A) ..","B) ..","C) ..","D) .."] + correctAnswer "A"/"B"/"C"/"D"
@@ -108,7 +108,7 @@ JSON structure (return EXACTLY this shape, nothing else):
 }
 
 Include exactly ${cfg.qCount} question objects. Vocabulary: 6-10 key words.${exclusionHint}`,
-      5000
+      7000
     );
 
     // Validate — be lenient, work with whatever the model returned
