@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 import {
   Library, Search, Trash2, Volume2, ChevronLeft, ChevronRight,
   BookOpen, Zap, Tag, Filter, X, BarChart2, RefreshCw, BookMarked,
+  Play, Pause, Square, BookText, Eye, EyeOff,
 } from 'lucide-react'
 import api from '../utils/api'
 
@@ -106,6 +107,265 @@ function speakDE(text: string) {
   const u = new SpeechSynthesisUtterance(text)
   u.lang = 'de-DE'; u.rate = 0.82; u.pitch = 1.0
   speechSynthesis.speak(u)
+}
+
+// ─── TTS Hook ─────────────────────────────────────────────────────────────────
+
+function useTTS(text: string) {
+  const [playing, setPlaying] = useState(false)
+  const [paused,  setPaused]  = useState(false)
+  const uttRef = useRef<SpeechSynthesisUtterance | null>(null)
+
+  const play = () => {
+    if (paused && speechSynthesis.paused) {
+      speechSynthesis.resume()
+      setPlaying(true); setPaused(false)
+      return
+    }
+    speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'de-DE'; u.rate = 0.80; u.pitch = 1.0
+    u.onend   = () => { setPlaying(false); setPaused(false) }
+    u.onerror = () => { setPlaying(false); setPaused(false) }
+    uttRef.current = u
+    speechSynthesis.speak(u)
+    setPlaying(true); setPaused(false)
+  }
+
+  const pause = () => {
+    speechSynthesis.pause()
+    setPlaying(false); setPaused(true)
+  }
+
+  const stop = () => {
+    speechSynthesis.cancel()
+    setPlaying(false); setPaused(false)
+  }
+
+  const restart = () => {
+    stop()
+    setTimeout(play, 100)
+  }
+
+  // cleanup on unmount
+  useEffect(() => () => { speechSynthesis.cancel() }, [])
+
+  return { playing, paused, play, pause, stop, restart }
+}
+
+// ─── TTS Controls ─────────────────────────────────────────────────────────────
+
+function TTSControls({ text, className = '' }: { text: string; className?: string }) {
+  const { playing, paused, play, pause, stop, restart } = useTTS(text)
+  return (
+    <div className={`flex items-center gap-1.5 ${className}`}>
+      {playing
+        ? <button onClick={pause}   title="Pause"   className="btn-ghost p-2 text-gold hover:text-gold/70"><Pause  size={15}/></button>
+        : <button onClick={play}    title={paused ? "Resume" : "Read aloud"} className="btn-ghost p-2 text-gray-400 hover:text-gold"><Play   size={15}/></button>
+      }
+      {(playing || paused) && (
+        <>
+          {paused && <button onClick={play}    title="Resume"  className="btn-ghost p-2 text-gray-400 hover:text-gold"><Play  size={15}/></button>}
+          <button onClick={restart} title="Restart" className="btn-ghost p-2 text-gray-500 hover:text-blue-400"><Volume2 size={14}/></button>
+          <button onClick={stop}    title="Stop"    className="btn-ghost p-2 text-gray-500 hover:text-red-400"><Square  size={13}/></button>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Word Read Modal ───────────────────────────────────────────────────────────
+
+function WordReadModal({ word, onClose }: { word: LibraryWord; onClose: () => void }) {
+  const pos = posInfo(word.partOfSpeech)
+  const readText = [
+    word.de,
+    word.en,
+    word.example || '',
+    word.tip || '',
+  ].filter(Boolean).join('. ')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"/>
+      <div className="relative w-full max-w-lg card space-y-5 max-h-[85vh] overflow-y-auto animate-fade-in"
+        onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${pos.bg} ${pos.color} mb-2`}>
+              {pos.emoji} {pos.label}
+            </span>
+            <h2 className="font-display text-4xl text-gray-100">{word.de}</h2>
+            {word.ipa && <p className="text-violet-400 font-mono text-sm mt-0.5">{word.ipa}</p>}
+            <p className="text-gray-400 text-lg mt-1">{word.en}</p>
+          </div>
+          <button onClick={onClose} className="btn-ghost p-1.5 text-gray-600 hover:text-gray-300 shrink-0">
+            <X size={18}/>
+          </button>
+        </div>
+
+        {/* TTS Controls */}
+        <div className="flex items-center gap-2 p-3 bg-ink-800 border border-white/[0.06] rounded-xl">
+          <Volume2 size={14} className="text-gray-500 shrink-0"/>
+          <span className="text-xs text-gray-500 flex-1">Read aloud</span>
+          <TTSControls text={readText}/>
+        </div>
+
+        {/* Noun info */}
+        {word.gender && (
+          <div className="p-3 bg-ink-800 border border-white/[0.06] rounded-xl flex gap-4 text-sm">
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Article</p>
+              <p className={`font-bold text-lg ${GENDER_COLORS[word.gender] || 'text-gray-300'}`}>{word.gender}</p>
+            </div>
+            {word.plural && (
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Plural</p>
+                <p className="text-gray-200 font-medium">{word.plural}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Conjugations */}
+        {word.conjugations && Object.values(word.conjugations).some(Boolean) && (
+          <div>
+            <p className="section-label mb-2">Conjugations</p>
+            <div className="grid grid-cols-3 gap-2">
+              {Object.entries(word.conjugations).map(([pro, form]) => (
+                <div key={pro} className="bg-ink-800 border border-white/[0.05] rounded-xl px-3 py-2 text-sm">
+                  <span className="text-gray-600">{pro} </span>
+                  <span className="text-gray-200 font-medium">{form}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Comparative / superlative */}
+        {(word.comparative || word.superlative) && (
+          <div className="flex gap-6 text-sm">
+            {word.comparative && <div><p className="text-xs text-gray-600 mb-0.5">Comparative</p><p className="text-gray-200">{word.comparative}</p></div>}
+            {word.superlative && <div><p className="text-xs text-gray-600 mb-0.5">Superlative</p><p className="text-gray-200">{word.superlative}</p></div>}
+          </div>
+        )}
+
+        {/* Example */}
+        {word.example && (
+          <div className="p-4 bg-ink-800 border border-white/[0.06] rounded-xl space-y-2">
+            <p className="text-xs text-gray-600 uppercase tracking-wider">Example</p>
+            <p className="text-gray-200 italic leading-relaxed">"{word.example}"</p>
+            {word.exampleEn && <p className="text-gray-500 text-sm">— {word.exampleEn}</p>}
+          </div>
+        )}
+
+        {/* Tip */}
+        {word.tip && (
+          <div className="flex gap-2.5 p-3 bg-gold/5 border border-gold/15 rounded-xl">
+            <span>💡</span>
+            <p className="text-sm text-gray-300 leading-relaxed">{word.tip}</p>
+          </div>
+        )}
+
+        <p className="text-xs text-gray-600">
+          Added {formatDate(word.createdAt)} · {formatTime(word.createdAt)} · Generated ×{word.volume}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Story Read Modal ──────────────────────────────────────────────────────────
+
+function StoryReadModal({ story, onClose }: { story: { _id: string; title: string; titleEn: string; level: string; topic: string; genre: string; source: string; passage: string; passageEn: string; vocabulary: {de:string;en:string;ipa:string}[]; createdAt: string }; onClose: () => void }) {
+  const [showTranslation, setShowTranslation] = useState(false)
+  const readText = story.passage
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"/>
+      <div className="relative w-full max-w-2xl card space-y-5 max-h-[88vh] overflow-y-auto animate-fade-in"
+        onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
+                story.level === 'A1' ? 'text-teal-400 bg-teal-500/10 border-teal-400/30'
+                : story.level === 'A2' ? 'text-blue-400 bg-blue-500/10 border-blue-400/30'
+                : story.level === 'B1' ? 'text-gold bg-gold/10 border-gold/30'
+                : story.level === 'B2' ? 'text-orange-400 bg-orange-500/10 border-orange-400/30'
+                : 'text-red-400 bg-red-500/10 border-red-400/30'}`}>
+                {story.level}
+              </span>
+              <span className="text-xs text-gray-600 capitalize">{story.genre} · {story.topic}</span>
+              <span className={`text-xs ${SOURCE_CONFIG[story.source]?.color || 'text-gray-600'}`}>
+                {SOURCE_CONFIG[story.source]?.label}
+              </span>
+            </div>
+            <h2 className="font-display text-2xl text-gray-100">{story.title}</h2>
+            {story.titleEn && <p className="text-gray-500 text-sm italic">{story.titleEn}</p>}
+          </div>
+          <button onClick={onClose} className="btn-ghost p-1.5 text-gray-600 hover:text-gray-300 shrink-0">
+            <X size={18}/>
+          </button>
+        </div>
+
+        {/* TTS Controls */}
+        <div className="flex items-center gap-2 p-3 bg-ink-800 border border-white/[0.06] rounded-xl">
+          <Volume2 size={14} className="text-gray-500 shrink-0"/>
+          <span className="text-xs text-gray-500 flex-1">Read aloud in German</span>
+          <TTSControls text={readText}/>
+        </div>
+
+        {/* Passage */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="section-label">Passage</p>
+            <button onClick={() => setShowTranslation(t => !t)}
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gold transition-colors">
+              {showTranslation ? <EyeOff size={12}/> : <Eye size={12}/>}
+              {showTranslation ? 'Hide' : 'Show'} translation
+            </button>
+          </div>
+          {story.passage.split('\n\n').map((para, i) => (
+            <p key={i} className="text-gray-200 leading-relaxed text-sm sm:text-base">{para}</p>
+          ))}
+          {showTranslation && story.passageEn && (
+            <div className="pt-3 border-t border-white/[0.06] space-y-2">
+              {story.passageEn.split('\n\n').map((para, i) => (
+                <p key={i} className="text-gray-500 italic text-sm leading-relaxed">{para}</p>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Vocabulary */}
+        {story.vocabulary?.length > 0 && (
+          <div>
+            <p className="section-label mb-2">Key Vocabulary</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {story.vocabulary.map((v, i) => (
+                <button key={i} onClick={() => speakDE(v.de)}
+                  className="flex flex-col items-start px-3 py-2 bg-ink-800 border border-white/[0.05] rounded-xl text-left hover:border-gold/20 transition-colors">
+                  <span className="text-sm font-medium text-gray-200">{v.de}</span>
+                  {v.ipa && <span className="text-[10px] text-violet-400 font-mono">{v.ipa}</span>}
+                  <span className="text-xs text-gray-500">{v.en}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-gray-600">
+          Added {formatDate(story.createdAt)}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 function posInfo(pos: string) {
@@ -232,6 +492,8 @@ export default function LibraryPage() {
   const [stats, setStats]             = useState<Stats | null>(null)
   const [loading, setLoading]         = useState(false)
   const [selected, setSelected]       = useState<LibraryWord | null>(null)
+  const [readWord, setReadWord]       = useState<LibraryWord | null>(null)
+  const [readStory, setReadStory]     = useState<StoryEntry & { passage: string; passageEn: string; vocabulary: {de:string;en:string;ipa:string}[] } | null>(null)
 
   // Filters
   const [search, setSearch]           = useState('')
@@ -475,6 +737,7 @@ export default function LibraryPage() {
                   <th className="px-4 py-3 text-center text-xs text-gray-500 font-medium uppercase tracking-wider">
                     <span className="flex items-center justify-center gap-1"><Zap size={11}/> Vol</span>
                   </th>
+                  <th className="px-4 py-3 text-center text-xs text-gray-500 font-medium uppercase tracking-wider">Read</th>
                   <th className="px-4 py-3 w-16"/>
                 </tr>
               </thead>
@@ -537,6 +800,15 @@ export default function LibraryPage() {
                         }`}>
                           ×{word.volume}
                         </span>
+                      </td>
+
+                      {/* Read */}
+                      <td className="px-4 py-3 text-center">
+                        <button onClick={e => { e.stopPropagation(); setReadWord(word) }}
+                          title="Read this word"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold/10 border border-gold/25 text-gold text-xs hover:bg-gold/20 transition-all opacity-0 group-hover:opacity-100">
+                          <BookText size={11}/> Read
+                        </button>
                       </td>
 
                       {/* Delete */}
@@ -644,6 +916,7 @@ export default function LibraryPage() {
                       <th className="px-4 py-3 text-center text-xs text-gray-500 font-medium uppercase tracking-wider">
                         <span className="flex items-center justify-center gap-1"><Zap size={11}/> Gen</span>
                       </th>
+                      <th className="px-4 py-3 text-center text-xs text-gray-500 font-medium uppercase tracking-wider">Read</th>
                       <th className="px-4 py-3 w-12"/>
                     </tr>
                   </thead>
@@ -711,8 +984,12 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {/* Word detail modal — always rendered when active */}
-      {selected && <WordDetail word={selected} onClose={() => setSelected(null)}/>}
+      {/* Word detail / Read modals */}
+      {selected  && <WordDetail    word={selected}  onClose={() => setSelected(null)}/>}
+      {/* Word read modal */}
+      {readWord  && <WordReadModal word={readWord}  onClose={() => { setReadWord(null); speechSynthesis.cancel() }}/>}
+      {/* Story read modal */}
+      {readStory && <StoryReadModal story={readStory} onClose={() => { setReadStory(null); speechSynthesis.cancel() }}/>}}
     </div>
   )
 }

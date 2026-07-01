@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { toast } from 'react-toastify'
 import {
   BookOpen, Wand2, CheckCircle2, XCircle, Volume2,
   ChevronRight, ChevronLeft, Trophy, RotateCcw, History,
   Clock, FileText, Eye, EyeOff, Trash2, BarChart2, X,
+  Play, Pause, Square,
 } from 'lucide-react'
 import api from '../utils/api'
 
@@ -88,11 +89,91 @@ const SCORE_COLOR = (pct: number) =>
 const SCORE_LABEL = (pct: number) =>
   pct >= 80 ? 'Excellent' : pct >= 60 ? 'Good' : pct >= 40 ? 'Needs work' : 'Keep practising'
 
-function speakDE(text: string) {
+function speakWord(text: string) {
   speechSynthesis.cancel()
   const u = new SpeechSynthesisUtterance(text)
   u.lang = 'de-DE'; u.rate = 0.82; u.pitch = 1.0
   speechSynthesis.speak(u)
+}
+
+// ─── Passage TTS Controls ────────────────────────────────────────────────────
+
+function PassageTTS({ text }: { text: string }) {
+  const [state, setState] = useState<'idle' | 'playing' | 'paused'>('idle')
+
+  // cleanup on unmount
+  useEffect(() => () => { speechSynthesis.cancel() }, [])
+
+  const play = useCallback(() => {
+    if (state === 'paused' && speechSynthesis.paused) {
+      speechSynthesis.resume()
+      setState('playing')
+      return
+    }
+    speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'de-DE'; u.rate = 0.80; u.pitch = 1.0
+    u.onend   = () => setState('idle')
+    u.onerror = () => setState('idle')
+    speechSynthesis.speak(u)
+    setState('playing')
+  }, [state, text])
+
+  const pause = () => {
+    speechSynthesis.pause()
+    setState('paused')
+  }
+
+  const stop = () => {
+    speechSynthesis.cancel()
+    setState('idle')
+  }
+
+  const restart = () => {
+    speechSynthesis.cancel()
+    setState('idle')
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(text)
+      u.lang = 'de-DE'; u.rate = 0.80; u.pitch = 1.0
+      u.onend   = () => setState('idle')
+      u.onerror = () => setState('idle')
+      speechSynthesis.speak(u)
+      setState('playing')
+    }, 80)
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      {/* Play / Pause toggle */}
+      {state === 'playing' ? (
+        <button onClick={pause} title="Pause"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-xs hover:bg-gold/20 transition-all">
+          <Pause size={13}/> Pause
+        </button>
+      ) : (
+        <button onClick={play} title={state === 'paused' ? 'Continue' : 'Read aloud'}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-xs hover:bg-gold/20 transition-all">
+          <Play size={13}/> {state === 'paused' ? 'Continue' : 'Listen'}
+        </button>
+      )}
+
+      {/* Restart — visible when playing or paused */}
+      {state !== 'idle' && (
+        <button onClick={restart} title="Restart from beginning"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-400/25 text-blue-400 text-xs hover:bg-blue-500/20 transition-all">
+          <RotateCcw size={12}/> Restart
+        </button>
+      )}
+
+      {/* Stop — visible when playing or paused */}
+      {state !== 'idle' && (
+        <button onClick={stop} title="Stop"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-400/25 text-red-400 text-xs hover:bg-red-500/20 transition-all">
+          <Square size={12}/> Stop
+        </button>
+      )}
+    </div>
+  )
 }
 
 // ─── Question component ───────────────────────────────────────────────────────
@@ -518,21 +599,23 @@ export default function ComprehensionPage() {
           <h1 className="font-display text-xl text-gray-100 mt-0.5 truncate">{comp.title}</h1>
           {comp.titleEn && <p className="text-xs text-gray-500 italic">{comp.titleEn}</p>}
         </div>
-        <button onClick={() => speakDE(comp.passage)}
-          className="btn-ghost p-2 text-gray-500 hover:text-gold shrink-0" title="Listen">
-          <Volume2 size={18}/>
-        </button>
+        <div className="shrink-0">
+          <PassageTTS text={comp.passage}/>
+        </div>
       </div>
 
       {/* Passage */}
       <div className="card space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="section-label">Read the passage</p>
-          <button onClick={() => setShowTranslation(t => !t)}
+          <div className="flex items-center gap-3">
+            <PassageTTS text={comp.passage}/>
+            <button onClick={() => setShowTranslation(t => !t)}
             className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gold transition-colors">
             {showTranslation ? <EyeOff size={13}/> : <Eye size={13}/>}
             {showTranslation ? 'Hide' : 'Show'} translation
-          </button>
+            </button>
+          </div>
         </div>
         <div className="prose prose-sm max-w-none">
           {comp.passage.split('\n\n').map((para, i) => (
@@ -559,7 +642,7 @@ export default function ComprehensionPage() {
           <p className="section-label mb-3">Key Vocabulary</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {comp.vocabulary.map((v, i) => (
-              <button key={i} onClick={() => speakDE(v.de)}
+              <button key={i} onClick={() => speakWord(v.de)}
                 className="flex flex-col items-start px-3 py-2 bg-ink-800 border border-white/[0.05] rounded-xl text-left hover:border-gold/20 transition-colors group">
                 <div className="flex items-center gap-1.5 w-full">
                   <span className="text-sm font-medium text-gray-200 truncate">{v.de}</span>

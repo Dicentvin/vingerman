@@ -207,6 +207,15 @@ export const getStoryLibrary = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+// ── GET /api/library/stories/:id/read ───────────────────────────────────────
+export const getStoryById = async (req, res, next) => {
+  try {
+    const doc = await StoryLibrary.findOne({ _id: req.params.id, userId: oid(req.userId) }).lean();
+    if (!doc) return res.status(404).json({ message: 'Story not found' });
+    res.json({ story: doc });
+  } catch (err) { next(err); }
+};
+
 // ── DELETE /api/library/stories/:id ──────────────────────────────────────────
 export const deleteStory = async (req, res, next) => {
   try {

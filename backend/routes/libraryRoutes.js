@@ -1,5 +1,5 @@
 import express from 'express';
-import { getLibrary, deleteWord, getStats, getStoryLibrary, deleteStory } from '../controllers/libraryController.js';
+import { getLibrary, deleteWord, getStats, getStoryLibrary, deleteStory, getStoryById } from '../controllers/libraryController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -7,8 +7,9 @@ router.use(protect);
 
 // Static routes FIRST (before any :param wildcards)
 router.get('/stats',         getStats);
-router.get('/stories',       getStoryLibrary);
-router.delete('/stories/:id', deleteStory);
+router.get('/stories',          getStoryLibrary);
+router.get('/stories/:id/read', getStoryById);
+router.delete('/stories/:id',   deleteStory);
 
 // General word library
 router.get('/',       getLibrary);
