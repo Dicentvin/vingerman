@@ -806,7 +806,7 @@ export default function LibraryPage() {
                       <td className="px-4 py-3 text-center">
                         <button onClick={e => { e.stopPropagation(); setReadWord(word) }}
                           title="Read this word"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold/10 border border-gold/25 text-gold text-xs hover:bg-gold/20 transition-all opacity-0 group-hover:opacity-100">
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold/10 border border-gold/25 text-gold text-xs hover:bg-gold/20 transition-all">
                           <BookText size={11}/> Read
                         </button>
                       </td>
@@ -950,6 +950,13 @@ export default function LibraryPage() {
                             <span className={`text-xs font-mono font-bold ${s.generatedCount >= 2 ? 'text-gold' : 'text-gray-600'}`}>
                               ×{s.generatedCount}
                             </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button onClick={() => setReadStory(s)}
+                              title="Read this story"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold/10 border border-gold/25 text-gold text-xs hover:bg-gold/20 transition-all">
+                              <BookText size={11}/> Read
+                            </button>
                           </td>
                           <td className="px-4 py-3 text-right">
                             <button onClick={() => handleStoryDelete(s._id)}
