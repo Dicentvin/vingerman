@@ -989,7 +989,7 @@ export default function LibraryPage() {
       {/* Word read modal */}
       {readWord  && <WordReadModal word={readWord}  onClose={() => { setReadWord(null); speechSynthesis.cancel() }}/>}
       {/* Story read modal */}
-      {readStory && <StoryReadModal story={readStory} onClose={() => { setReadStory(null); speechSynthesis.cancel() }}/>}}
+      {readStory && <StoryReadModal story={readStory} onClose={() => { setReadStory(null); speechSynthesis.cancel() }}/>}
     </div>
   )
 }
