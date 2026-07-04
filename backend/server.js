@@ -25,6 +25,9 @@ import storyRoutes        from './routes/storyRoutes.js';
 import articleRoutes      from './routes/articleRoutes.js';
 import libraryRoutes      from './routes/libraryRoutes.js';
 import comprehensionRoutes from './routes/comprehensionRoutes.js';
+import mockExamRoutes     from './routes/mockExamRoutes.js';
+import spacedRepRoutes    from './routes/spacedRepRoutes.js';
+import coachRoutes        from './routes/coachRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -60,6 +63,9 @@ app.use('/api/story',      storyRoutes);
 app.use('/api/article',    articleRoutes);
 app.use('/api/library',    libraryRoutes);
 app.use('/api/comprehension', comprehensionRoutes);
+app.use('/api/mock-exam',     mockExamRoutes);
+app.use('/api/spaced-rep',    spacedRepRoutes);
+app.use('/api/coach',         coachRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

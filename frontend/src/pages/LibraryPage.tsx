@@ -559,19 +559,6 @@ export default function LibraryPage() {
   useEffect(() => { fetchStats() }, [fetchStats])
   useEffect(() => { if (activeTab === 'stories') fetchStories() }, [fetchStories, activeTab])
 
-  const [readStoryLoadingId, setReadStoryLoadingId] = useState<string | null>(null)
-  const handleStoryRead = async (id: string) => {
-    setReadStoryLoadingId(id)
-    try {
-      const res = await api.get(`/library/stories/${id}/read`)
-      setReadStory(res.data.story)
-    } catch {
-      toast.error('Failed to load story')
-    } finally {
-      setReadStoryLoadingId(null)
-    }
-  }
-
   const handleStoryDelete = async (id: string) => {
     try {
       await api.delete(`/library/stories/${id}`)
@@ -819,7 +806,7 @@ export default function LibraryPage() {
                       <td className="px-4 py-3 text-center">
                         <button onClick={e => { e.stopPropagation(); setReadWord(word) }}
                           title="Read this word"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold/10 border border-gold/25 text-gold text-xs hover:bg-gold/20 transition-all">
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold/10 border border-gold/25 text-gold text-xs hover:bg-gold/20 transition-all opacity-0 group-hover:opacity-100">
                           <BookText size={11}/> Read
                         </button>
                       </td>
@@ -964,16 +951,6 @@ export default function LibraryPage() {
                               ×{s.generatedCount}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <button onClick={() => handleStoryRead(s._id)}
-                              disabled={readStoryLoadingId === s._id}
-                              title="Read this story"
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold/10 border border-gold/25 text-gold text-xs hover:bg-gold/20 transition-all disabled:opacity-50">
-                              {readStoryLoadingId === s._id
-                                ? <span className="spinner w-3 h-3"/>
-                                : <><BookText size={11}/> Read</>}
-                            </button>
-                          </td>
                           <td className="px-4 py-3 text-right">
                             <button onClick={() => handleStoryDelete(s._id)}
                               className="text-gray-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1">
@@ -1012,7 +989,7 @@ export default function LibraryPage() {
       {/* Word read modal */}
       {readWord  && <WordReadModal word={readWord}  onClose={() => { setReadWord(null); speechSynthesis.cancel() }}/>}
       {/* Story read modal */}
-      {readStory && <StoryReadModal story={readStory} onClose={() => { setReadStory(null); speechSynthesis.cancel() }}/>}
+      {readStory && <StoryReadModal story={readStory} onClose={() => { setReadStory(null); speechSynthesis.cancel() }}/>}}
     </div>
   )
 }

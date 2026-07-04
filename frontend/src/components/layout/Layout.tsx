@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Mic2, Languages, Volume2, Mic, BookOpen,
   LogOut, Flame, Headphones, PenLine, CreditCard,
   MessageSquare, Trophy, Menu, X, Folder,
-  Star, ClipboardCheck, Grid, BookMarked, Tag, LibraryBig, GraduationCap,
+  Star, ClipboardCheck, Grid, BookMarked, Tag, LibraryBig, GraduationCap, Timer, Brain, Mic,
 } from 'lucide-react'
 
 const navItems = [
@@ -28,7 +28,10 @@ const navItems = [
   { to: '/story',         icon: BookMarked,      label: 'Story Reader'        },
   { to: '/article-drill', icon: Tag,             label: 'Article Drill'       },
   { to: '/library',       icon: LibraryBig,     label: 'Word Library'        },
-  { to: '/comprehension', icon: GraduationCap,  label: 'Comprehension'       },
+  { to: '/comprehension',    icon: GraduationCap, label: 'Comprehension'       },
+  { to: '/mock-exam',          icon: Timer,         label: 'Mock Exam'           },
+  { to: '/spaced-repetition',  icon: Brain,         label: 'Spaced Repetition'   },
+  { to: '/coach',              icon: Mic,           label: 'Speaking Coach'      },
 ]
 
 export default function Layout() {
