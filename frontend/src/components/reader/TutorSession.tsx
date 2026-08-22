@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Mic, Square, Volume2, RotateCcw, ChevronRight,
   CheckCircle2, XCircle, Trophy, BookOpen, SkipForward,
-  BookOpen,
 } from 'lucide-react'
 import type { ReadingSegment } from '../../store/slices/readAloudSlice'
 import { SPEECH_MODES, type SpeechMode } from '../../hooks/useGermanTTS'
@@ -550,6 +549,13 @@ export default function TutorSession({
               {lineIdx + 1}<span className="text-sm text-gray-600">/{segments.length}</span>
             </p>
           </div>
+          <button
+            onClick={() => advanceLine(false, true)}
+            title="Skip to next line"
+            className="btn-ghost text-xs text-gray-500 hover:text-gold p-2 gap-1"
+          >
+            <SkipForward size={13}/> {isLastLine ? 'Finish' : 'Skip'}
+          </button>
           <button onClick={onExit} className="btn-ghost text-xs text-gray-600 hover:text-red-400 p-2">✕</button>
         </div>
       </div>
@@ -696,7 +702,7 @@ export default function TutorSession({
             {/* Comparison */}
             <div className="space-y-1.5 text-xs bg-black/10 rounded-xl p-3">
               <div className="flex gap-2 flex-wrap">
-                <span className="text-gray-600 shrink-0 w-14">Crosshair:</span>
+                <span className="text-gray-600 shrink-0 w-14">Target:</span>
                 <span className="text-gray-200 font-medium">{seg.text}</span>
               </div>
               <div className="flex gap-2 flex-wrap">
