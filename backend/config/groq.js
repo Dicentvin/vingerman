@@ -2,7 +2,7 @@ import Groq from 'groq-sdk';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = 'openai/gpt-oss-120b';;
 
 export const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
   const completion = await groq.chat.completions.create({
