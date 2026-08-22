@@ -1,4 +1,4 @@
-import { callGroq, callGroqJSON } from '../config/groq.js';
+import { callGroq, callGroqJSON, default as groq } from '../config/groq.js';
 import ExamSession from '../models/ExamSession.js';
 import User from '../models/User.js';
 
@@ -231,8 +231,8 @@ Rules:
       { role: 'user', content: userMessage }
     ];
 
-    const completion = await (await import('../config/groq.js')).default().chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await groq.chat.completions.create({
+      model: 'openai/gpt-oss-120b',
       max_tokens: 400,
       temperature: 0.8,
       messages,
