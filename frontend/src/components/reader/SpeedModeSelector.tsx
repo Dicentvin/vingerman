@@ -17,13 +17,13 @@ const modeInactive =
 
 export default function SpeedModeSelector({ current, onChange, disabled }: Props) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row">
+    <div className="flex flex-col gap-2">
       {SPEECH_MODES.map((m: SpeechModeConfig) => (
         <button
           key={m.key}
           disabled={disabled}
           onClick={() => onChange(m.key)}
-          className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border transition-all
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all
             text-left disabled:opacity-40 disabled:cursor-not-allowed
             ${current === m.key ? modeColors[m.key] : modeInactive}`}
         >
