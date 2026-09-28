@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { fetchTodaySet } from '../store/slices/grammarSlice'
-import api from '../services/api'   // ← same import as in GrammarDrillPage
+import api from '../utils/api'   // ← same import as in GrammarDrillPage
 import { Volume2, ChevronLeft, ChevronRight, ArrowLeft, Search } from 'lucide-react'
 
 type Row = { pronoun: string; de: string; en: string }
