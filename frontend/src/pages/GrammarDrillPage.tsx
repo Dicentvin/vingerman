@@ -5,9 +5,10 @@ import {
   generateWordSet, fetchTodaySet, fetchHistory, markPracticed,
 } from '../store/slices/grammarSlice'
 import type { WordCategory, GrammarWord, TenseRow } from '../store/slices/grammarSlice'
+import api from '../services/api'   // ← CHECK: change to your actual axios instance path
 import {
-  BookOpen, Zap, Volume2, ChevronDown, ChevronUp,
-  CheckCircle2, Trophy, RotateCcw, BarChart2,
+  BookOpen, Zap, Volume2,
+  CheckCircle2, RotateCcw, BarChart2,
   Wand2, ChevronLeft, ChevronRight, Hash,
 } from 'lucide-react'
 
@@ -35,33 +36,52 @@ const GENDER_COLORS: Record<string, string> = {
   das: 'text-green-400 bg-green-500/10 border-green-400/20',
 }
 
-// ─── Core speak helper — reads text AS-IS, article included ──────────────────
-// NOTE: we deliberately do NOT strip der/die/das so nouns are read with article
-
 function speakGerman(text: string, rate = 0.82) {
   speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(text)   // ← NO .replace() — article kept
+  const u = new SpeechSynthesisUtterance(text)
   u.lang = 'de-DE'
   u.rate = rate
   u.pitch = 1.0
   speechSynthesis.speak(u)
 }
 
+type TenseData = { present: TenseRow[]; past: TenseRow[]; future: TenseRow[] }
+
 // ─── Single Word Detail Page ──────────────────────────────────────────────────
 
 function WordDetail({
-  word, globalIndex, total, onPrev, onNext, isFirst, isLast,
+  word, setId, globalIndex, total, onPrev, onNext, isFirst, isLast,
 }: {
-  word: GrammarWord; globalIndex: number; total: number
+  word: GrammarWord; setId?: string; globalIndex: number; total: number
   onPrev: () => void; onNext: () => void
   isFirst: boolean; isLast: boolean
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
   const catInfo = CATEGORIES.find(c => c.key === word.category)
 
+  const [tenses, setTenses] = useState<TenseData | undefined>(word.tenseExamples as TenseData | undefined)
+  const [tenseLoading, setTenseLoading] = useState(false)
+
   useEffect(() => {
     cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [globalIndex])
+
+  useEffect(() => {
+    setTenses(word.tenseExamples as TenseData | undefined)
+  }, [word])
+
+  const loadTenses = async () => {
+    if (!setId) return
+    setTenseLoading(true)
+    try {
+      const { data } = await api.post('/grammar/tenses', { setId, de: word.de })   // ← CHECK path
+      setTenses(data.tenseExamples)
+    } catch {
+      toast.error('Could not load tense examples. Try again.')
+    } finally {
+      setTenseLoading(false)
+    }
+  }
 
   const progress = Math.round(((globalIndex + 1) / total) * 100)
 
@@ -80,7 +100,6 @@ function WordDetail({
       {/* Main word card */}
       <div className="card">
 
-        {/* Category + gender badges */}
         {catInfo && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             <span className={`text-xs px-3 py-1.5 rounded-full border font-medium ${catInfo.bg} ${catInfo.color}`}>
@@ -94,13 +113,11 @@ function WordDetail({
           </div>
         )}
 
-        {/* German word — reads WITH article (e.g. "der Hund") */}
         <div className="flex items-start gap-3 mb-2">
           <div className="flex-1">
             <h2 className="font-display text-3xl sm:text-4xl text-gray-100 leading-tight">{word.de}</h2>
             {word.ipa && <p className="text-violet-soft font-mono text-sm mt-1">{word.ipa}</p>}
           </div>
-          {/* Speak button — passes full word.de which includes the article */}
           <button
             onClick={() => speakGerman(word.de)}
             className="btn-secondary p-3 shrink-0 text-gold border-gold/30 hover:bg-gold/10"
@@ -182,12 +199,20 @@ function WordDetail({
           </div>
         )}
 
-        {/* VERB: I/you/he/she/it/we/they examples in present, past & future */}
-        {word.category === 'verb' && word.tenseExamples && (
-          <TenseExamples tenseExamples={word.tenseExamples} />
+        {/* VERB: tense examples — loaded on demand */}
+        {word.category === 'verb' && (
+          tenses
+            ? <TenseExamples tenseExamples={tenses} />
+            : (
+              <button onClick={loadTenses} disabled={tenseLoading || !setId}
+                className="btn-secondary w-full justify-center mb-4 disabled:opacity-50">
+                {tenseLoading
+                  ? <><span className="spinner"/> Loading examples…</>
+                  : '📚 Show I / you / he / she / it / we / they in 3 tenses'}
+              </button>
+            )
         )}
 
-        {/* Tip */}
         {word.tip && (
           <div className="flex items-start gap-2.5 p-3 bg-gold/5 border border-gold/15 rounded-xl mb-4">
             <span className="text-base shrink-0">💡</span>
@@ -208,11 +233,9 @@ function WordDetail({
         </div>
 
         <div className="space-y-3">
-          {/* Primary example */}
           {word.example && (
             <SentenceCard index={0} sentence={word.example} translation={word.exampleEn} isPrimary/>
           )}
-          {/* Additional sentences */}
           {word.sentences?.map((sentence, i) => (
             <SentenceCard
               key={i} index={i + 1}
@@ -253,8 +276,6 @@ function WordDetail({
   )
 }
 
-// ─── Sentence Card ────────────────────────────────────────────────────────────
-
 // ─── Tense examples (I/you/he/she/it/we/they × present/past/future) ──────────
 
 const ENGLISH_PRONOUNS = ['I', 'you', 'he', 'she', 'it', 'we', 'they']
@@ -265,11 +286,7 @@ const TENSE_TABS: { key: 'present' | 'past' | 'future'; label: string; de: strin
   { key: 'future',  label: 'Future',  de: 'Futur I' },
 ]
 
-function TenseExamples({
-  tenseExamples,
-}: {
-  tenseExamples: { present: TenseRow[]; past: TenseRow[]; future: TenseRow[] }
-}) {
+function TenseExamples({ tenseExamples }: { tenseExamples: TenseData }) {
   const [tab, setTab] = useState<'present' | 'past' | 'future'>('present')
   const [shownTrans, setShownTrans] = useState<Set<number>>(new Set())
   const rows = tenseExamples[tab] || []
@@ -332,6 +349,8 @@ function TenseExamples({
   )
 }
 
+// ─── Sentence Card ────────────────────────────────────────────────────────────
+
 function SentenceCard({
   index, sentence, translation, isPrimary,
 }: {
@@ -361,7 +380,6 @@ function SentenceCard({
             )
           )}
         </div>
-        {/* Speaks the full sentence — no article stripping */}
         <button onClick={() => speakGerman(sentence)}
           className="btn-ghost p-1.5 shrink-0 text-gray-600 hover:text-gold">
           <Volume2 size={14}/>
@@ -382,7 +400,6 @@ function WordListRow({ word, index, onClick, isActive }: {
       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all
         ${isActive ? 'bg-gold/10 border border-gold/25' : 'bg-ink-800 border border-white/[0.05] hover:border-white/10'}`}>
       <span className="text-[10px] font-mono text-gray-600 w-7 text-center shrink-0">{index + 1}</span>
-      {/* Full word including article */}
       <span className="text-sm font-medium text-gray-200 flex-1 truncate">{word.de}</span>
       <span className="text-xs text-gray-500 truncate max-w-[100px] hidden sm:block">{word.en}</span>
       {word.gender && (
@@ -424,13 +441,23 @@ export default function GrammarDrillPage() {
 
   const handleGenerate = async () => {
     setCurrentPage(0)
-    const result = await dispatch(generateWordSet({ category, count }))
-    if (result.error) toast.error(String(result.payload))
-    else { toast.success(`${count} ${category} words ready! 🎉`); setActiveTab('study') }
+    const result: any = await dispatch(generateWordSet({ category, count }))
+    if (result.error) { toast.error(String(result.payload)); return }
+
+    const payload = result.payload
+    const got: number | undefined =
+      payload?.wordSet?.words?.length ?? payload?.words?.length
+    const note: string | undefined = payload?.note
+
+    if (got !== undefined && got < count) {
+      toast.warn(note || `Only ${got} of ${count} words were generated. Click Generate again for more.`)
+    } else {
+      toast.success(`${got ?? count} ${category} words ready! 🎉`)
+    }
+    setActiveTab('study')
   }
 
-  const words         = todaySet?.words || []
-  // Reset list page on search
+  const words = todaySet?.words || []
   useEffect(() => { setListPage(1) }, [searchTerm])
 
   const filteredWords = words.filter(w =>
@@ -442,7 +469,6 @@ export default function GrammarDrillPage() {
 
   const handleQuizAnswer = async (knew: boolean) => {
     if (knew) setQuizScore(s => s + 1)
-    // Speak the full word with article on reveal
     speakGerman(words[quizIdx].de)
     if (quizIdx + 1 >= words.length) {
       const finalScore = Math.round(((quizScore + (knew ? 1 : 0)) / words.length) * 100)
@@ -510,7 +536,6 @@ export default function GrammarDrillPage() {
           onClick={() => { if (!quizRevealed) { setQuizRevealed(true); speakGerman(qWord.de) } }}>
           {!quizRevealed ? (
             <>
-              {/* Show full word with article in quiz too */}
               <p className="font-display text-5xl text-gray-100 mb-2">{qWord.de}</p>
               {qWord.ipa && <p className="text-violet-soft font-mono">{qWord.ipa}</p>}
               <p className="text-gray-600 text-sm mt-4">Tap to reveal</p>
@@ -591,6 +616,11 @@ export default function GrammarDrillPage() {
             ? <><span className="spinner"/> Generating {count} {category} words…</>
             : <><Wand2 size={15}/> Generate {count} {CATEGORIES.find(c => c.key === category)?.label} Words</>}
         </button>
+        {generating && count >= 50 && (
+          <p className="text-[11px] text-gray-500 text-center mt-2">
+            Large sets are generated in batches — this can take up to a minute.
+          </p>
+        )}
       </div>
 
       {/* Loading */}
@@ -634,10 +664,11 @@ export default function GrammarDrillPage() {
             ))}
           </div>
 
-          {/* STUDY — one word per page */}
+          {/* STUDY */}
           {activeTab === 'study' && currentWord && (
             <WordDetail
               word={currentWord}
+              setId={todaySet._id}
               globalIndex={currentPage}
               total={words.length}
               onPrev={() => setCurrentPage(p => Math.max(0, p - 1))}
@@ -647,7 +678,7 @@ export default function GrammarDrillPage() {
             />
           )}
 
-          {/* LIST — searchable + paginated */}
+          {/* LIST */}
           {activeTab === 'list' && (() => {
             const listTotalPages = Math.ceil(filteredWords.length / LIST_PER_PAGE)
             const pagedWords = filteredWords.slice((listPage - 1) * LIST_PER_PAGE, listPage * LIST_PER_PAGE)
