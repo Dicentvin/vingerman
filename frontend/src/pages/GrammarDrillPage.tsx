@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import {
   generateWordSet, fetchTodaySet, fetchHistory, markPracticed,
 } from '../store/slices/grammarSlice'
-import type { WordCategory, GrammarWord, TenseRow } from '../store/slices/grammarSlice'
-import api from '../services/api'   // ← CHECK: change to your actual axios instance path
+import type { WordCategory, GrammarWord } from '../store/slices/grammarSlice'
 import {
   BookOpen, Zap, Volume2,
   CheckCircle2, RotateCcw, BarChart2,
@@ -45,43 +45,22 @@ function speakGerman(text: string, rate = 0.82) {
   speechSynthesis.speak(u)
 }
 
-type TenseData = { present: TenseRow[]; past: TenseRow[]; future: TenseRow[] }
-
 // ─── Single Word Detail Page ──────────────────────────────────────────────────
 
 function WordDetail({
-  word, setId, globalIndex, total, onPrev, onNext, isFirst, isLast,
+  word, globalIndex, total, onPrev, onNext, isFirst, isLast,
 }: {
-  word: GrammarWord; setId?: string; globalIndex: number; total: number
+  word: GrammarWord; globalIndex: number; total: number
   onPrev: () => void; onNext: () => void
   isFirst: boolean; isLast: boolean
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
   const catInfo = CATEGORIES.find(c => c.key === word.category)
-
-  const [tenses, setTenses] = useState<TenseData | undefined>(word.tenseExamples as TenseData | undefined)
-  const [tenseLoading, setTenseLoading] = useState(false)
 
   useEffect(() => {
     cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [globalIndex])
-
-  useEffect(() => {
-    setTenses(word.tenseExamples as TenseData | undefined)
-  }, [word])
-
-  const loadTenses = async () => {
-    if (!setId) return
-    setTenseLoading(true)
-    try {
-      const { data } = await api.post('/grammar/tenses', { setId, de: word.de })   // ← CHECK path
-      setTenses(data.tenseExamples)
-    } catch {
-      toast.error('Could not load tense examples. Try again.')
-    } finally {
-      setTenseLoading(false)
-    }
-  }
 
   const progress = Math.round(((globalIndex + 1) / total) * 100)
 
@@ -179,6 +158,15 @@ function WordDetail({
           </div>
         )}
 
+        {/* VERB: open the Tense page */}
+        {word.category === 'verb' && (
+          <button
+            onClick={() => navigate('/tenses', { state: { verb: word.de } })}
+            className="btn-primary w-full justify-center mb-4">
+            🕐 See Present · Past · Future tenses
+          </button>
+        )}
+
         {/* ADJECTIVE: comparative table */}
         {word.category === 'adjective' && (word.comparative || word.superlative) && (
           <div className="grid grid-cols-3 gap-2 mb-4">
@@ -197,20 +185,6 @@ function WordDetail({
               </div>
             ))}
           </div>
-        )}
-
-        {/* VERB: tense examples — loaded on demand */}
-        {word.category === 'verb' && (
-          tenses
-            ? <TenseExamples tenseExamples={tenses} />
-            : (
-              <button onClick={loadTenses} disabled={tenseLoading || !setId}
-                className="btn-secondary w-full justify-center mb-4 disabled:opacity-50">
-                {tenseLoading
-                  ? <><span className="spinner"/> Loading examples…</>
-                  : '📚 Show I / you / he / she / it / we / they in 3 tenses'}
-              </button>
-            )
         )}
 
         {word.tip && (
@@ -272,79 +246,6 @@ function WordDetail({
           <p className="text-gray-500 text-xs mt-0.5">Switch to List view or start the Quiz</p>
         </div>
       )}
-    </div>
-  )
-}
-
-// ─── Tense examples (I/you/he/she/it/we/they × present/past/future) ──────────
-
-const ENGLISH_PRONOUNS = ['I', 'you', 'he', 'she', 'it', 'we', 'they']
-
-const TENSE_TABS: { key: 'present' | 'past' | 'future'; label: string; de: string }[] = [
-  { key: 'present', label: 'Present', de: 'Präsens' },
-  { key: 'past',    label: 'Past',    de: 'Perfekt' },
-  { key: 'future',  label: 'Future',  de: 'Futur I' },
-]
-
-function TenseExamples({ tenseExamples }: { tenseExamples: TenseData }) {
-  const [tab, setTab] = useState<'present' | 'past' | 'future'>('present')
-  const [shownTrans, setShownTrans] = useState<Set<number>>(new Set())
-  const rows = tenseExamples[tab] || []
-
-  useEffect(() => { setShownTrans(new Set()) }, [tab])
-
-  if (!rows.length) return null
-
-  return (
-    <div className="mb-4 rounded-xl border border-white/[0.07] overflow-hidden">
-      <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 bg-ink-800">
-        <p className="text-[10px] text-gray-500 uppercase tracking-widest">
-          I / you / he / she / it / we / they
-        </p>
-        <div className="flex gap-1">
-          {TENSE_TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors
-                ${tab === t.key
-                  ? 'bg-teal-muted text-teal-soft border-teal-soft/30'
-                  : 'text-gray-500 border-white/[0.06] hover:text-gray-300'}`}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="divide-y divide-white/[0.05] bg-ink-900">
-        {rows.map((row, i) => (
-          <div key={i} className="px-4 py-3">
-            <div className="flex items-start gap-3">
-              <span className="text-[10px] text-gray-600 uppercase tracking-wide w-10 shrink-0 mt-0.5">
-                {ENGLISH_PRONOUNS[i] || row.pronoun}
-              </span>
-              <div className="flex-1 min-w-0">
-                <button onClick={() => speakGerman(row.de)}
-                  className="flex items-start gap-1.5 group text-left">
-                  <span className="text-sm font-medium text-gray-200 group-hover:text-gold transition-colors leading-relaxed">
-                    {row.de}
-                  </span>
-                  <Volume2 size={11} className="text-gray-700 group-hover:text-gold transition-colors shrink-0 mt-0.5"/>
-                </button>
-                {row.en && (
-                  shownTrans.has(i) ? (
-                    <p className="text-xs text-teal-soft/80 mt-1 italic leading-relaxed">{row.en}</p>
-                  ) : (
-                    <button
-                      onClick={() => setShownTrans(prev => new Set(prev).add(i))}
-                      className="text-[11px] text-gray-600 hover:text-teal-soft mt-0.5 transition-colors">
-                      Tap to see translation →
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
@@ -668,7 +569,6 @@ export default function GrammarDrillPage() {
           {activeTab === 'study' && currentWord && (
             <WordDetail
               word={currentWord}
-              setId={todaySet._id}
               globalIndex={currentPage}
               total={words.length}
               onPrev={() => setCurrentPage(p => Math.max(0, p - 1))}
