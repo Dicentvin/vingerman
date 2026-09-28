@@ -21,6 +21,7 @@ import MaterialsPage from './pages/MaterialsPage'
 import SyllabusPage from './pages/SyllabusPage'
 import ExamPracticePage from './pages/ExamPracticePage'
 import GrammarDrillPage from './pages/GrammarDrillPage'
+import TensePage from './pages/TensePage'
 import StoryPage from './pages/StoryPage'
 import ArticleDrillPage from './pages/ArticleDrillPage'
 import LibraryPage from './pages/LibraryPage'
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="syllabus"       element={<SyllabusPage/>}/>
           <Route path="exam-practice"  element={<ExamPracticePage/>}/>
           <Route path="grammar-drill"  element={<GrammarDrillPage/>}/>
+          <Route path="tenses"         element={<TensePage/>}/>
           <Route path="story"          element={<StoryPage/>}/>
           <Route path="article-drill"  element={<ArticleDrillPage/>}/>
           <Route path="library"        element={<LibraryPage/>}/>
