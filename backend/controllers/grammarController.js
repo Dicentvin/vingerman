@@ -23,6 +23,11 @@ const wordSchema = new mongoose.Schema({
   sentences:    [{ type: String }],
   sentencesEn:  [{ type: String }],
   tip:          { type: String, default: '' },
+  tenseExamples: {
+    present: [{ pronoun: String, de: String, en: String, _id: false }],
+    past:    [{ pronoun: String, de: String, en: String, _id: false }],
+    future:  [{ pronoun: String, de: String, en: String, _id: false }],
+  },
 }, { _id: false });
 
 const wordSetSchema = new mongoose.Schema({
@@ -40,6 +45,35 @@ const WordSet = mongoose.models.WordSet || mongoose.model('WordSet', wordSetSche
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function todayStr() {
   return new Date().toISOString().split('T')[0];
+}
+
+// Expected pronoun order for verb tense examples: I, you, he, she, it, we, they
+const TENSE_PRONOUNS = ['ich', 'du', 'er', 'sie', 'es', 'wir', 'sie'];
+
+function normalizeTenseRow(row) {
+  return {
+    pronoun: String(row?.pronoun || '').trim(),
+    de:      String(row?.de || '').trim(),
+    en:      String(row?.en || '').trim(),
+  };
+}
+
+function normalizeTenseExamples(raw) {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const build = (arr) => {
+    if (!Array.isArray(arr)) return [];
+    const rows = arr.map(normalizeTenseRow).filter(r => r.de && r.en);
+    // Fill in the expected pronoun label if the AI omitted it, keeping row order
+    return rows.slice(0, 7).map((r, i) => ({
+      ...r,
+      pronoun: r.pronoun || TENSE_PRONOUNS[i] || '',
+    }));
+  };
+  const present = build(raw.present);
+  const past    = build(raw.past);
+  const future  = build(raw.future);
+  if (!present.length && !past.length && !future.length) return undefined;
+  return { present, past, future };
 }
 
 const CATEGORY_PROMPTS = {
@@ -68,7 +102,12 @@ For each word include:
 - "example_en": English translation
 - "sentences": array of 3-5 varied German sentences using this verb in different tenses/contexts
 - "sentences_en": English translations of each sentence in the same order
-- "tip": note if irregular, separable, or takes sein in Perfekt`,
+- "tip": note if irregular, separable, or takes sein in Perfekt
+- "tense_examples": an object with three keys "present", "past", "future". Each key holds an array of EXACTLY 7 objects, one per pronoun, in this exact order: ich (I), du (you), er (he), sie (she), es (it), wir (we), sie-plural (they). Each object has:
+  - "pronoun": the German pronoun (ich/du/er/sie/es/wir/sie)
+  - "de": a complete, natural German sentence using that pronoun with this verb correctly conjugated for that tense (present = Präsens, past = Perfekt or Präteritum, future = Futur I with "werden")
+  - "en": the English translation of that sentence
+  This gives 21 example sentences total per verb (7 pronouns × 3 tenses).`,
 
   adjective: `Generate {count} German adjectives.
 For each word include:
@@ -146,7 +185,8 @@ For each word include ALL relevant fields:
 - "example_en": English translation
 - "sentences": array of 3-5 varied German sentences using this word in real contexts
 - "sentences_en": English translations of each sentence in the same order
-- "tip": helpful memory note`,
+- "tip": helpful memory note
+- "tense_examples": ONLY for verbs — an object with keys "present","past","future", each an array of EXACTLY 7 objects (pronoun/de/en) for ich, du, er, sie, es, wir, sie-plural, showing that verb correctly conjugated in that tense for every pronoun`,
 };
 
 // ── Generate word set ─────────────────────────────────────────────────────────
@@ -166,14 +206,26 @@ export const generateWordSet = async (req, res, next) => {
       ? `\n\nCRITICAL — do NOT include ANY of these words (user has already seen them):\n${[...seenSet].slice(0, 300).join(', ')}`
       : '';
 
-    // Request extra words to compensate for AI duplication
-    const requestCount = Math.min(safeCount + 20, 120);
+    // Verbs (and mixed, which may include verbs) now carry 21 extra tense-example
+    // sentences each (7 pronouns × 3 tenses: present/past/future), so each verb costs
+    // roughly 3-4x the tokens of a plain word. Groq hard-caps completions at 8192 tokens,
+    // so we must cap how many words we ask for in one call — asking for too many silently
+    // truncates the JSON and Groq rejects it with a 400 json_validate_failed error.
+    const isVerbHeavy = category === 'verb' || category === 'mixed';
+    const perWordTokens = isVerbHeavy ? 220 : 65;
+    const GROQ_MAX_TOKENS = 8192;
+    const RESPONSE_OVERHEAD = 400; // JSON braces/keys/formatting slack
+    const maxWordsForBudget = Math.floor((GROQ_MAX_TOKENS - RESPONSE_OVERHEAD) / perWordTokens);
+
+    // Request a few extra words to compensate for AI duplication, but never request
+    // more than the token budget can actually support.
+    const dedupeBuffer = isVerbHeavy ? 5 : 20;
+    const requestCount = Math.max(5, Math.min(safeCount + dedupeBuffer, 120, maxWordsForBudget));
 
     const promptTemplate = CATEGORY_PROMPTS[category] || CATEGORY_PROMPTS.mixed;
     const prompt = promptTemplate.replace('{count}', requestCount);
 
-    // Scale tokens: ~60 tokens per word for full JSON with conjugations/examples
-    const tokensNeeded = Math.min(8000, Math.max(3000, requestCount * 65));
+    const tokensNeeded = Math.min(GROQ_MAX_TOKENS, Math.max(3000, requestCount * perWordTokens + RESPONSE_OVERHEAD));
     const parsed = await callGroqJSON(
       `You are an expert German language teacher. Generate vocabulary lists with complete grammatical information.
 Always respond with valid JSON only — a single object with a "words" array.`,
@@ -220,6 +272,7 @@ Do NOT repeat words.${exclusionHint}`,
         ? w.sentences_en.map(s => String(s).trim()).filter(Boolean)
         : [],
       tip:          String(w.tip || '').trim(),
+      tenseExamples: normalizeTenseExamples(w.tense_examples || w.tenseExamples),
     }))
     .filter(w => {
       if (!w.de || !w.en) return false;
@@ -256,7 +309,11 @@ Do NOT repeat words.${exclusionHint}`,
 
     await User.findByIdAndUpdate(req.userId, { $inc: { totalXP: 5 } });
 
-    res.json({ wordSet, totalSeen: seenSet.size + words.length });
+    const note = (isVerbHeavy && requestCount < safeCount)
+      ? `Generated ${words.length} verbs with full I/you/he/she/it/we/they examples in present, past and future tense. Asking for that much detail per verb limits how many fit in one request — generate again for more.`
+      : undefined;
+
+    res.json({ wordSet, totalSeen: seenSet.size + words.length, note });
   } catch (err) { next(err); }
 };
 
