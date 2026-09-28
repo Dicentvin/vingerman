@@ -21,6 +21,17 @@ export interface GrammarWord {
   sentences?: string[]     // 3-5 usage sentences
   sentencesEn?: string[]   // English translations of sentences
   tip?: string             // memory tip
+  tenseExamples?: {        // for verbs — I/you/he/she/it/we/they in each tense
+    present: TenseRow[]
+    past: TenseRow[]
+    future: TenseRow[]
+  }
+}
+
+export interface TenseRow {
+  pronoun: string
+  de: string
+  en: string
 }
 
 export interface WordSet {
