@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import {
   generateWordSet, fetchTodaySet, fetchHistory, markPracticed,
 } from '../store/slices/grammarSlice'
-import type { WordCategory, GrammarWord } from '../store/slices/grammarSlice'
+import type { WordCategory, GrammarWord, TenseRow } from '../store/slices/grammarSlice'
 import {
   BookOpen, Zap, Volume2, ChevronDown, ChevronUp,
   CheckCircle2, Trophy, RotateCcw, BarChart2,
@@ -182,6 +182,11 @@ function WordDetail({
           </div>
         )}
 
+        {/* VERB: I/you/he/she/it/we/they examples in present, past & future */}
+        {word.category === 'verb' && word.tenseExamples && (
+          <TenseExamples tenseExamples={word.tenseExamples} />
+        )}
+
         {/* Tip */}
         {word.tip && (
           <div className="flex items-start gap-2.5 p-3 bg-gold/5 border border-gold/15 rounded-xl mb-4">
@@ -249,6 +254,83 @@ function WordDetail({
 }
 
 // ─── Sentence Card ────────────────────────────────────────────────────────────
+
+// ─── Tense examples (I/you/he/she/it/we/they × present/past/future) ──────────
+
+const ENGLISH_PRONOUNS = ['I', 'you', 'he', 'she', 'it', 'we', 'they']
+
+const TENSE_TABS: { key: 'present' | 'past' | 'future'; label: string; de: string }[] = [
+  { key: 'present', label: 'Present', de: 'Präsens' },
+  { key: 'past',    label: 'Past',    de: 'Perfekt' },
+  { key: 'future',  label: 'Future',  de: 'Futur I' },
+]
+
+function TenseExamples({
+  tenseExamples,
+}: {
+  tenseExamples: { present: TenseRow[]; past: TenseRow[]; future: TenseRow[] }
+}) {
+  const [tab, setTab] = useState<'present' | 'past' | 'future'>('present')
+  const [shownTrans, setShownTrans] = useState<Set<number>>(new Set())
+  const rows = tenseExamples[tab] || []
+
+  useEffect(() => { setShownTrans(new Set()) }, [tab])
+
+  if (!rows.length) return null
+
+  return (
+    <div className="mb-4 rounded-xl border border-white/[0.07] overflow-hidden">
+      <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 bg-ink-800">
+        <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+          I / you / he / she / it / we / they
+        </p>
+        <div className="flex gap-1">
+          {TENSE_TABS.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors
+                ${tab === t.key
+                  ? 'bg-teal-muted text-teal-soft border-teal-soft/30'
+                  : 'text-gray-500 border-white/[0.06] hover:text-gray-300'}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="divide-y divide-white/[0.05] bg-ink-900">
+        {rows.map((row, i) => (
+          <div key={i} className="px-4 py-3">
+            <div className="flex items-start gap-3">
+              <span className="text-[10px] text-gray-600 uppercase tracking-wide w-10 shrink-0 mt-0.5">
+                {ENGLISH_PRONOUNS[i] || row.pronoun}
+              </span>
+              <div className="flex-1 min-w-0">
+                <button onClick={() => speakGerman(row.de)}
+                  className="flex items-start gap-1.5 group text-left">
+                  <span className="text-sm font-medium text-gray-200 group-hover:text-gold transition-colors leading-relaxed">
+                    {row.de}
+                  </span>
+                  <Volume2 size={11} className="text-gray-700 group-hover:text-gold transition-colors shrink-0 mt-0.5"/>
+                </button>
+                {row.en && (
+                  shownTrans.has(i) ? (
+                    <p className="text-xs text-teal-soft/80 mt-1 italic leading-relaxed">{row.en}</p>
+                  ) : (
+                    <button
+                      onClick={() => setShownTrans(prev => new Set(prev).add(i))}
+                      className="text-[11px] text-gray-600 hover:text-teal-soft mt-0.5 transition-colors">
+                      Tap to see translation →
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function SentenceCard({
   index, sentence, translation, isPrimary,
