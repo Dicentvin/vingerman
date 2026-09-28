@@ -47,7 +47,6 @@ function todayStr() {
   return new Date().toISOString().split('T')[0];
 }
 
-// Expected pronoun order for verb tense examples: I, you, he, she, it, we, they
 const TENSE_PRONOUNS = ['ich', 'du', 'er', 'sie', 'es', 'wir', 'sie'];
 
 function normalizeTenseRow(row) {
@@ -63,7 +62,6 @@ function normalizeTenseExamples(raw) {
   const build = (arr) => {
     if (!Array.isArray(arr)) return [];
     const rows = arr.map(normalizeTenseRow).filter(r => r.de && r.en);
-    // Fill in the expected pronoun label if the AI omitted it, keeping row order
     return rows.slice(0, 7).map((r, i) => ({
       ...r,
       pronoun: r.pronoun || TENSE_PRONOUNS[i] || '',
@@ -76,6 +74,10 @@ function normalizeTenseExamples(raw) {
   return { present, past, future };
 }
 
+const keyOf = (de) => String(de || '').toLowerCase().replace(/^(der|die|das)\s+/i, '');
+
+// NOTE: tense_examples are NOT in the bulk prompts anymore (too many tokens).
+// They are generated on demand per verb via generateTenseExamples below.
 const CATEGORY_PROMPTS = {
   noun: `Generate {count} German nouns.
 For each word include:
@@ -87,9 +89,9 @@ For each word include:
 - "plural": plural form with article (e.g. "die Hunde")
 - "example": a short example sentence in German
 - "example_en": English translation of example
-- "sentences": array of 3-5 varied German sentences using this word in different contexts
+- "sentences": array of 3 varied German sentences using this word
 - "sentences_en": English translations of each sentence in the same order
-- "tip": memory trick for the gender (optional)`,
+- "tip": short memory trick for the gender`,
 
   verb: `Generate {count} German verbs (mix of regular and irregular).
 For each word include:
@@ -97,17 +99,12 @@ For each word include:
 - "en": English meaning
 - "ipa": IPA pronunciation
 - "category": "verb"
-- "conjugations": object with keys ich/du/er/wir/ihr/sie present tense forms
+- "conjugations": object with keys ich/du/er/wir/ihr/sie (present tense forms)
 - "example": example sentence using the verb
 - "example_en": English translation
-- "sentences": array of 3-5 varied German sentences using this verb in different tenses/contexts
-- "sentences_en": English translations of each sentence in the same order
-- "tip": note if irregular, separable, or takes sein in Perfekt
-- "tense_examples": an object with three keys "present", "past", "future". Each key holds an array of EXACTLY 7 objects, one per pronoun, in this exact order: ich (I), du (you), er (he), sie (she), es (it), wir (we), sie-plural (they). Each object has:
-  - "pronoun": the German pronoun (ich/du/er/sie/es/wir/sie)
-  - "de": a complete, natural German sentence using that pronoun with this verb correctly conjugated for that tense (present = Präsens, past = Perfekt or Präteritum, future = Futur I with "werden")
-  - "en": the English translation of that sentence
-  This gives 21 example sentences total per verb (7 pronouns × 3 tenses).`,
+- "sentences": array of 3 varied German sentences using this verb
+- "sentences_en": English translations in the same order
+- "tip": short note if irregular, separable, or takes sein in Perfekt`,
 
   adjective: `Generate {count} German adjectives.
 For each word include:
@@ -117,11 +114,11 @@ For each word include:
 - "category": "adjective"
 - "comparative": comparative form (e.g. "größer")
 - "superlative": superlative form (e.g. "am größten")
-- "example": example sentence with the adjective in use
+- "example": example sentence
 - "example_en": English translation
-- "sentences": array of 3-5 German sentences showing the adjective with different genders/cases
-- "sentences_en": English translations of each sentence in the same order
-- "tip": usage note or common pairing`,
+- "sentences": array of 3 German sentences showing the adjective in use
+- "sentences_en": English translations in the same order
+- "tip": short usage note or common pairing`,
 
   adverb: `Generate {count} German adverbs (time, manner, place, frequency).
 For each word include:
@@ -131,8 +128,8 @@ For each word include:
 - "category": "adverb"
 - "example": example sentence
 - "example_en": English translation
-- "sentences": array of 3-5 varied German sentences using this adverb
-- "sentences_en": English translations of each sentence in the same order
+- "sentences": array of 3 varied German sentences
+- "sentences_en": English translations in the same order
 - "tip": which type of adverb (time/manner/place/frequency)`,
 
   preposition: `Generate {count} German prepositions.
@@ -143,8 +140,8 @@ For each word include:
 - "category": "preposition"
 - "example": example sentence
 - "example_en": English translation
-- "sentences": array of 3-5 German sentences showing this preposition with correct cases
-- "sentences_en": English translations of each sentence in the same order
+- "sentences": array of 3 German sentences showing correct cases
+- "sentences_en": English translations in the same order
 - "tip": which case it takes (Accusative / Dative / Genitive / both)`,
 
   conjunction: `Generate {count} German conjunctions (coordinating and subordinating).
@@ -153,11 +150,11 @@ For each word include:
 - "en": English equivalent
 - "ipa": IPA pronunciation
 - "category": "conjunction"
-- "example": example sentence showing word order effect
+- "example": example sentence showing word order
 - "example_en": English translation
-- "sentences": array of 3-5 German sentences demonstrating this conjunction
-- "sentences_en": English translations of each sentence in the same order
-- "tip": coordinating or subordinating — and the word order rule`,
+- "sentences": array of 3 German sentences
+- "sentences_en": English translations in the same order
+- "tip": coordinating or subordinating and the word order rule`,
 
   pronoun: `Generate {count} German pronouns (personal, reflexive, relative, demonstrative).
 For each word include:
@@ -167,129 +164,130 @@ For each word include:
 - "category": "pronoun"
 - "example": example sentence
 - "example_en": English translation
-- "sentences": array of 3-5 German sentences showing this pronoun in use
-- "sentences_en": English translations of each sentence in the same order
+- "sentences": array of 3 German sentences
+- "sentences_en": English translations in the same order
 - "tip": type of pronoun and its case`,
 
   mixed: `Generate {count} useful German words — mix of nouns, verbs, adjectives, adverbs and prepositions.
-For each word include ALL relevant fields:
+For each word include the relevant fields:
 - "de": word (nouns include article, e.g. "der Hund")
 - "en": English meaning
 - "ipa": IPA pronunciation
-- "category": the actual category ("noun"|"verb"|"adjective"|"adverb"|"preposition"|"conjunction"|"pronoun")
+- "category": "noun"|"verb"|"adjective"|"adverb"|"preposition"|"conjunction"|"pronoun"
 - "gender": only for nouns
 - "plural": only for nouns
 - "conjugations": only for verbs (ich/du/er/wir/ihr/sie)
 - "comparative"/"superlative": only for adjectives
 - "example": example sentence
 - "example_en": English translation
-- "sentences": array of 3-5 varied German sentences using this word in real contexts
-- "sentences_en": English translations of each sentence in the same order
-- "tip": helpful memory note
-- "tense_examples": ONLY for verbs — an object with keys "present","past","future", each an array of EXACTLY 7 objects (pronoun/de/en) for ich, du, er, sie, es, wir, sie-plural, showing that verb correctly conjugated in that tense for every pronoun`,
+- "sentences": array of 3 varied German sentences
+- "sentences_en": English translations in the same order
+- "tip": short helpful memory note`,
 };
 
-// ── Generate word set ─────────────────────────────────────────────────────────
+function normalizeWord(w, category) {
+  return {
+    de:          String(w.de || '').trim(),
+    en:          String(w.en || '').trim(),
+    ipa:         String(w.ipa || '').trim(),
+    category:    String(w.category || category).trim(),
+    gender:      String(w.gender || '').trim(),
+    plural:      String(w.plural || '').trim(),
+    conjugations: w.conjugations ? {
+      ich: String(w.conjugations.ich || '').trim(),
+      du:  String(w.conjugations.du  || '').trim(),
+      er:  String(w.conjugations.er  || '').trim(),
+      wir: String(w.conjugations.wir || '').trim(),
+      ihr: String(w.conjugations.ihr || '').trim(),
+      sie: String(w.conjugations.sie || '').trim(),
+    } : undefined,
+    comparative: String(w.comparative || '').trim(),
+    superlative: String(w.superlative || '').trim(),
+    example:     String(w.example || w.example_sentence || '').trim(),
+    exampleEn:   String(w.example_en || w.exampleEn || '').trim(),
+    sentences:   Array.isArray(w.sentences)
+      ? w.sentences.map(s => String(s).trim()).filter(Boolean) : [],
+    sentencesEn: Array.isArray(w.sentences_en)
+      ? w.sentences_en.map(s => String(s).trim()).filter(Boolean) : [],
+    tip:         String(w.tip || '').trim(),
+  };
+}
+
+// ── Generate word set (batched) ───────────────────────────────────────────────
 export const generateWordSet = async (req, res, next) => {
   try {
     const { category = 'mixed', count = 100 } = req.body;
     const safeCount = Math.min(Math.max(10, parseInt(count) || 100), 100);
 
-    // ── Deduplication: load all words this user has ever seen for this category ──
+    // Words this user has already seen
     const seenDocs = await Library.find(
       { userId: req.userId, partOfSpeech: category === 'mixed' ? { $exists: true } : category },
       'de'
     ).lean();
-    const seenSet = new Set(seenDocs.map(d => d.de.toLowerCase().replace(/^(der|die|das)\s+/i, '')));
+    const seenSet = new Set(seenDocs.map(d => keyOf(d.de)));
 
-    const exclusionHint = seenSet.size > 0
-      ? `\n\nCRITICAL — do NOT include ANY of these words (user has already seen them):\n${[...seenSet].slice(0, 300).join(', ')}`
-      : '';
+    const BATCH_SIZE = 12;      // words per AI call
+    const PER_WORD   = 420;     // conservative token estimate per word
+    const MAX_ATTEMPTS = 14;
+    const DEADLINE = Date.now() + 50_000;   // stop before typical serverless timeouts
 
-    // Verbs (and mixed, which may include verbs) now carry 21 extra tense-example
-    // sentences each (7 pronouns × 3 tenses: present/past/future), so each verb costs
-    // roughly 3-4x the tokens of a plain word. Groq hard-caps completions at 8192 tokens,
-    // so we must cap how many words we ask for in one call — asking for too many silently
-    // truncates the JSON and Groq rejects it with a 400 json_validate_failed error.
-    const isVerbHeavy = category === 'verb' || category === 'mixed';
-    const perWordTokens = isVerbHeavy ? 220 : 65;
-    const GROQ_MAX_TOKENS = 8192;
-    const RESPONSE_OVERHEAD = 400; // JSON braces/keys/formatting slack
-    const maxWordsForBudget = Math.floor((GROQ_MAX_TOKENS - RESPONSE_OVERHEAD) / perWordTokens);
+    const words = [];
+    const usedInBatch = new Set();
+    let attempts = 0;
 
-    // Request a few extra words to compensate for AI duplication, but never request
-    // more than the token budget can actually support.
-    const dedupeBuffer = isVerbHeavy ? 5 : 20;
-    const requestCount = Math.max(5, Math.min(safeCount + dedupeBuffer, 120, maxWordsForBudget));
+    while (words.length < safeCount && attempts < MAX_ATTEMPTS && Date.now() < DEADLINE) {
+      attempts++;
+      const n = Math.min(BATCH_SIZE, safeCount - words.length + 3);
 
-    const promptTemplate = CATEGORY_PROMPTS[category] || CATEGORY_PROMPTS.mixed;
-    const prompt = promptTemplate.replace('{count}', requestCount);
+      const exclude = [...new Set([...seenSet, ...usedInBatch])].slice(-300);
+      const exclusionHint = exclude.length
+        ? `\n\nCRITICAL — do NOT include ANY of these words:\n${exclude.join(', ')}`
+        : '';
 
-    const tokensNeeded = Math.min(GROQ_MAX_TOKENS, Math.max(3000, requestCount * perWordTokens + RESPONSE_OVERHEAD));
-    const parsed = await callGroqJSON(
-      `You are an expert German language teacher. Generate vocabulary lists with complete grammatical information.
+      const prompt = (CATEGORY_PROMPTS[category] || CATEGORY_PROMPTS.mixed)
+        .replace('{count}', n);
+
+      let parsed;
+      try {
+        parsed = await callGroqJSON(
+          `You are an expert German language teacher. Generate vocabulary lists with complete grammatical information.
 Always respond with valid JSON only — a single object with a "words" array.`,
-      `${prompt}
+          `${prompt}
 
-Return a JSON object: { "words": [ ...array of ${requestCount} word objects... ] }
+Return a JSON object: { "words": [ ...exactly ${n} word objects... ] }
 
 Make the words varied and genuinely useful for German learners.
-Cover different difficulty levels — mix common everyday words with some intermediate ones.
+Mix common everyday words with some intermediate ones.
 Do NOT repeat words.${exclusionHint}`,
-      tokensNeeded
-    );
+          Math.min(8192, n * PER_WORD + 500)
+        );
+      } catch (e) {
+        console.error(`[grammar] batch ${attempts} failed:`, e.message);
+        continue;   // try again instead of failing the whole request
+      }
 
-    const rawWords = parsed.words || parsed;
-    if (!Array.isArray(rawWords) || rawWords.length === 0) {
-      return res.status(500).json({ message: 'AI returned no words. Please try again.' });
+      const raw = parsed?.words || parsed;
+      if (!Array.isArray(raw)) continue;
+
+      for (const r of raw) {
+        const w = normalizeWord(r, category);
+        if (!w.de || !w.en) continue;
+        const key = keyOf(w.de);
+        if (seenSet.has(key) || usedInBatch.has(key)) continue;
+        usedInBatch.add(key);
+        words.push(w);
+        if (words.length >= safeCount) break;
+      }
     }
 
-    // Normalise + deduplicate (against library AND within this batch)
-    const usedInBatch = new Set();
-    const words = rawWords.map(w => ({
-      de:          String(w.de || '').trim(),
-      en:          String(w.en || '').trim(),
-      ipa:         String(w.ipa || '').trim(),
-      category:    String(w.category || category).trim(),
-      gender:      String(w.gender || '').trim(),
-      plural:      String(w.plural || '').trim(),
-      conjugations: w.conjugations ? {
-        ich: String(w.conjugations.ich || '').trim(),
-        du:  String(w.conjugations.du  || '').trim(),
-        er:  String(w.conjugations.er  || '').trim(),
-        wir: String(w.conjugations.wir || '').trim(),
-        ihr: String(w.conjugations.ihr || '').trim(),
-        sie: String(w.conjugations.sie || '').trim(),
-      } : undefined,
-      comparative:  String(w.comparative || '').trim(),
-      superlative:  String(w.superlative || '').trim(),
-      example:      String(w.example     || w.example_sentence || '').trim(),
-      exampleEn:    String(w.example_en  || w.exampleEn || '').trim(),
-      sentences:    Array.isArray(w.sentences)
-        ? w.sentences.map(s => String(s).trim()).filter(Boolean)
-        : [],
-      sentencesEn:  Array.isArray(w.sentences_en)
-        ? w.sentences_en.map(s => String(s).trim()).filter(Boolean)
-        : [],
-      tip:          String(w.tip || '').trim(),
-      tenseExamples: normalizeTenseExamples(w.tense_examples || w.tenseExamples),
-    }))
-    .filter(w => {
-      if (!w.de || !w.en) return false;
-      const key = w.de.toLowerCase().replace(/^(der|die|das)\s+/i, '');
-      if (seenSet.has(key))        return false;  // already in library
-      if (usedInBatch.has(key))    return false;  // duplicate within batch
-      usedInBatch.add(key);
-      return true;
-    })
-    .slice(0, safeCount);
+    console.log(`[grammar] requested ${safeCount}, produced ${words.length} in ${attempts} batches`);
 
     if (words.length === 0) {
       return res.status(200).json({
         wordSet: { words: [], category, count: 0 },
         allSeen: true,
         totalSeen: seenSet.size,
-        message: 'You have seen all available words in this category! Your library is complete for now.',
+        message: 'No new words could be generated. Please try again.',
       });
     }
 
@@ -300,7 +298,6 @@ Do NOT repeat words.${exclusionHint}`,
       userId: req.userId, date: today, category, words,
     });
 
-    // Save new words to library — this IS the deduplication store going forward
     await addWordsToLibrary(req.userId, words.map(w => ({
       ...w,
       source: 'grammar',
@@ -309,11 +306,51 @@ Do NOT repeat words.${exclusionHint}`,
 
     await User.findByIdAndUpdate(req.userId, { $inc: { totalXP: 5 } });
 
-    const note = (isVerbHeavy && requestCount < safeCount)
-      ? `Generated ${words.length} verbs with full I/you/he/she/it/we/they examples in present, past and future tense. Asking for that much detail per verb limits how many fit in one request — generate again for more.`
+    const note = words.length < safeCount
+      ? `Generated ${words.length} of ${safeCount} words. Generate again for more.`
       : undefined;
 
     res.json({ wordSet, totalSeen: seenSet.size + words.length, note });
+  } catch (err) { next(err); }
+};
+
+// ── Generate tense examples for ONE verb (on demand, cached) ─────────────────
+export const generateTenseExamples = async (req, res, next) => {
+  try {
+    const { setId, de } = req.body;
+    if (!setId || !de) return res.status(400).json({ message: 'setId and de are required' });
+
+    const set = await WordSet.findOne({ _id: setId, userId: req.userId });
+    const word = set?.words.find(w => w.de === de);
+    if (!word) return res.status(404).json({ message: 'Word not found' });
+
+    // Cached
+    if (word.tenseExamples?.present?.length) {
+      return res.json({ tenseExamples: word.tenseExamples });
+    }
+
+    const parsed = await callGroqJSON(
+      'You are an expert German teacher. Respond with valid JSON only.',
+      `For the German verb "${de}" (${word.en}) return:
+{ "tense_examples": { "present": [...], "past": [...], "future": [...] } }
+Each array has EXACTLY 7 objects in this order: ich, du, er, sie, es, wir, sie (plural "they").
+Each object: {"pronoun": "...", "de": "a complete natural German sentence", "en": "English translation"}.
+present = Präsens, past = Perfekt, future = Futur I with "werden".
+Conjugate the verb correctly for every pronoun.`,
+      3500
+    );
+
+    const tenseExamples = normalizeTenseExamples(parsed?.tense_examples || parsed);
+    if (!tenseExamples) {
+      return res.status(502).json({ message: 'AI returned no examples. Please try again.' });
+    }
+
+    await WordSet.updateOne(
+      { _id: setId, userId: req.userId, 'words.de': de },
+      { $set: { 'words.$.tenseExamples': tenseExamples } }
+    );
+
+    res.json({ tenseExamples });
   } catch (err) { next(err); }
 };
 
