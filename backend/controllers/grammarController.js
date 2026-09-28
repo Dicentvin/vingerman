@@ -76,8 +76,8 @@ function normalizeTenseExamples(raw) {
 
 const keyOf = (de) => String(de || '').toLowerCase().replace(/^(der|die|das)\s+/i, '');
 
-// NOTE: tense_examples are NOT in the bulk prompts anymore (too many tokens).
-// They are generated on demand per verb via generateTenseExamples below.
+// NOTE: tense_examples are NOT in the bulk prompts (too many tokens).
+// They are generated per verb on the Tense page via generateVerbTenses below.
 const CATEGORY_PROMPTS = {
   noun: `Generate {count} German nouns.
 For each word include:
@@ -226,22 +226,25 @@ export const generateWordSet = async (req, res, next) => {
     ).lean();
     const seenSet = new Set(seenDocs.map(d => keyOf(d.de)));
 
-    const BATCH_SIZE = 12;      // words per AI call
-    const PER_WORD   = 420;     // conservative token estimate per word
-    const MAX_ATTEMPTS = 14;
-    const DEADLINE = Date.now() + 50_000;   // stop before typical serverless timeouts
+    const BATCH_SIZE = 12;
+    const PER_WORD   = 420;
+    const MAX_ATTEMPTS = 20;
+    const DEADLINE = Date.now() + 50_000;
+    const LETTERS = 'BEAGFHKLMNRSTUVWZDPO'.split('');
 
     const words = [];
     const usedInBatch = new Set();
+    const recycled = [];            // previously-seen words, used only to top up
     let attempts = 0;
 
     while (words.length < safeCount && attempts < MAX_ATTEMPTS && Date.now() < DEADLINE) {
+      const letter = LETTERS[attempts % LETTERS.length];
       attempts++;
       const n = Math.min(BATCH_SIZE, safeCount - words.length + 3);
 
-      const exclude = [...new Set([...seenSet, ...usedInBatch])].slice(-300);
+      const exclude = [...usedInBatch].slice(-150);
       const exclusionHint = exclude.length
-        ? `\n\nCRITICAL — do NOT include ANY of these words:\n${exclude.join(', ')}`
+        ? `\n\nDo NOT include any of these words:\n${exclude.join(', ')}`
         : '';
 
       const prompt = (CATEGORY_PROMPTS[category] || CATEGORY_PROMPTS.mixed)
@@ -256,14 +259,13 @@ Always respond with valid JSON only — a single object with a "words" array.`,
 
 Return a JSON object: { "words": [ ...exactly ${n} word objects... ] }
 
-Make the words varied and genuinely useful for German learners.
-Mix common everyday words with some intermediate ones.
+Prefer common everyday words (A1-B1 level) that start with the letter "${letter}". If there are not enough, use other letters.
 Do NOT repeat words.${exclusionHint}`,
           Math.min(8192, n * PER_WORD + 500)
         );
       } catch (e) {
         console.error(`[grammar] batch ${attempts} failed:`, e.message);
-        continue;   // try again instead of failing the whole request
+        continue;
       }
 
       const raw = parsed?.words || parsed;
@@ -273,14 +275,24 @@ Do NOT repeat words.${exclusionHint}`,
         const w = normalizeWord(r, category);
         if (!w.de || !w.en) continue;
         const key = keyOf(w.de);
-        if (seenSet.has(key) || usedInBatch.has(key)) continue;
+        if (usedInBatch.has(key)) continue;
+        if (seenSet.has(key)) {          // already in library: keep as backup
+          if (!recycled.find(x => keyOf(x.de) === key)) recycled.push(w);
+          continue;
+        }
         usedInBatch.add(key);
         words.push(w);
         if (words.length >= safeCount) break;
       }
     }
 
-    console.log(`[grammar] requested ${safeCount}, produced ${words.length} in ${attempts} batches`);
+    // Top up with previously-seen words so the user always gets the count they asked for
+    for (const w of recycled) {
+      if (words.length >= safeCount) break;
+      words.push(w);
+    }
+
+    console.log(`[grammar] requested ${safeCount}, produced ${words.length} (${recycled.length} recycled) in ${attempts} batches`);
 
     if (words.length === 0) {
       return res.status(200).json({
@@ -314,24 +326,22 @@ Do NOT repeat words.${exclusionHint}`,
   } catch (err) { next(err); }
 };
 
-// ── Generate tense examples for ONE verb (on demand, cached) ─────────────────
-export const generateTenseExamples = async (req, res, next) => {
+// ── Tenses for ONE verb (used by the Tense page) ─────────────────────────────
+const tenseCache = new Map();
+
+export const generateVerbTenses = async (req, res, next) => {
   try {
-    const { setId, de } = req.body;
-    if (!setId || !de) return res.status(400).json({ message: 'setId and de are required' });
+    const verb = String(req.body.verb || '').trim();
+    if (!verb) return res.status(400).json({ message: 'verb is required' });
 
-    const set = await WordSet.findOne({ _id: setId, userId: req.userId });
-    const word = set?.words.find(w => w.de === de);
-    if (!word) return res.status(404).json({ message: 'Word not found' });
-
-    // Cached
-    if (word.tenseExamples?.present?.length) {
-      return res.json({ tenseExamples: word.tenseExamples });
+    const cacheKey = verb.toLowerCase();
+    if (tenseCache.has(cacheKey)) {
+      return res.json({ verb, tenseExamples: tenseCache.get(cacheKey) });
     }
 
     const parsed = await callGroqJSON(
       'You are an expert German teacher. Respond with valid JSON only.',
-      `For the German verb "${de}" (${word.en}) return:
+      `For the German verb "${verb}" return:
 { "tense_examples": { "present": [...], "past": [...], "future": [...] } }
 Each array has EXACTLY 7 objects in this order: ich, du, er, sie, es, wir, sie (plural "they").
 Each object: {"pronoun": "...", "de": "a complete natural German sentence", "en": "English translation"}.
@@ -345,12 +355,8 @@ Conjugate the verb correctly for every pronoun.`,
       return res.status(502).json({ message: 'AI returned no examples. Please try again.' });
     }
 
-    await WordSet.updateOne(
-      { _id: setId, userId: req.userId, 'words.de': de },
-      { $set: { 'words.$.tenseExamples': tenseExamples } }
-    );
-
-    res.json({ tenseExamples });
+    tenseCache.set(cacheKey, tenseExamples);
+    res.json({ verb, tenseExamples });
   } catch (err) { next(err); }
 };
 
