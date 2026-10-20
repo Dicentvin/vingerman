@@ -6,6 +6,7 @@ import {
   generateWordSet, fetchTodaySet, fetchHistory, markPracticed,
 } from '../store/slices/grammarSlice'
 import type { WordCategory, GrammarWord } from '../store/slices/grammarSlice'
+import SavedWordsTable from '../components/grammar/SavedWordsTable'
 import {
   BookOpen, Zap, Volume2,
   CheckCircle2, RotateCcw, BarChart2,
@@ -219,7 +220,7 @@ function WordDetail({
           ))}
           {(!word.sentences || word.sentences.length === 0) && !word.example && (
             <p className="text-center text-gray-600 text-sm py-4">
-              Regenerate the word set to get example sentences
+              No usage saved for this word — generate a new set to get examples
             </p>
           )}
         </div>
@@ -321,6 +322,7 @@ export default function GrammarDrillPage() {
 
   const [category, setCategory] = useState<WordCategory>('mixed')
   const [count, setCount]       = useState(20)
+  const [view, setView] = useState<'drill' | 'saved'>('drill')
   const [activeTab, setActiveTab] = useState<'study' | 'list' | 'quiz' | 'history'>('study')
   const [currentPage, setCurrentPage] = useState(0)
   const [listPage, setListPage]         = useState(1)
@@ -478,13 +480,26 @@ export default function GrammarDrillPage() {
 
   // ── MAIN VIEW ───────────────────────────────────────────────────────────────
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto animate-fade-in">
       <div className="mb-5">
         <h1 className="font-display text-2xl sm:text-3xl text-gray-100">Grammar Word Drill</h1>
         <p className="text-gray-500 text-sm mt-1">
           Generate up to 100 words — nouns read with <span className="text-gold">der/die/das</span> article
         </p>
       </div>
+
+      {/* View switch: generate/study  |  saved table */}
+      <div className="flex rounded-xl bg-ink-800 p-1 gap-1 mb-5">
+        {([['drill', '✨ Generate & Study'], ['saved', '🗂️ Saved Words (table)']] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setView(k)}
+            className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all
+              ${view === k ? 'bg-gold text-ink-950' : 'text-gray-400 hover:text-gray-200'}`}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {view === 'saved' ? <SavedWordsTable/> : (<>
 
       {/* Generator */}
       <div className="card mb-5">
@@ -666,6 +681,7 @@ export default function GrammarDrillPage() {
           </p>
         </div>
       )}
+      </>)}
     </div>
   )
 }
