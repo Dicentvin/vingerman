@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Mic2, Languages, Volume2, Mic, BookOpen,
   LogOut, Flame, Headphones, PenLine, CreditCard,
   MessageSquare, Trophy, Menu, X, Folder,
-  Star, ClipboardCheck, Grid, BookMarked, Tag, LibraryBig, GraduationCap, Timer, Brain, Mic,
+  Star, ClipboardCheck, Grid, BookMarked, Tag, LibraryBig, GraduationCap, Timer, Brain,
 } from 'lucide-react'
 
 const navItems = [
