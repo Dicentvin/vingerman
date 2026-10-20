@@ -2,7 +2,7 @@ import Groq from 'groq-sdk';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const MODEL = 'openai/gpt-oss-120b';;
+const MODEL = 'openai/gpt-oss-120b';
 
 export const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
   const completion = await groq.chat.completions.create({
@@ -19,12 +19,16 @@ export const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
   return text;
 };
 
-export const callGroqJSON = async (systemPrompt, userPrompt, maxTokens = 4000) => {
+// opts: { temperature?: number, reasoningEffort?: 'low'|'medium'|'high' }
+// gpt-oss models spend max_tokens on hidden reasoning first, so big JSON answers get cut off.
+// Passing reasoningEffort:'low' leaves the budget for the actual answer.
+export const callGroqJSON = async (systemPrompt, userPrompt, maxTokens = 4000, opts = {}) => {
   maxTokens = Math.min(8192, Math.max(1500, maxTokens)); // Groq limit
   const completion = await groq.chat.completions.create({
     model: MODEL,
     max_tokens: maxTokens,
-    temperature: 0.4,
+    temperature: opts.temperature ?? 0.4,
+    ...(opts.reasoningEffort && MODEL.includes('gpt-oss') ? { reasoning_effort: opts.reasoningEffort } : {}),
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: systemPrompt + '\nYou MUST respond with valid JSON only.' },
