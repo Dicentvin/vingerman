@@ -44,6 +44,21 @@ export interface WordSet {
   createdAt: string
 }
 
+export interface SavedWord extends Omit<GrammarWord, 'example' | 'exampleEn'> {
+  _id: string
+  example?: string
+  exampleEn?: string
+  createdAt: string
+}
+
+export interface SavedWordsResponse {
+  words: SavedWord[]
+  total: number
+  page: number
+  pages: number
+  counts: Record<string, number>
+}
+
 export interface GrammarDrillState {
   todaySet: WordSet | null
   history: { _id: string; date: string; category: WordCategory; score: number; practiced: boolean }[]
