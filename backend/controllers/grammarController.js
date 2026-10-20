@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { callGroqJSON } from '../config/groq.js';
 import User from '../models/User.js';
+import GrammarWord from '../models/GrammarWord.js';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 const wordSetSchema = new mongoose.Schema({
@@ -75,9 +76,40 @@ const cleanWord = (w, fallbackCategory) => {
   return out;
 };
 
-const generateBatch = async (category, n, avoid) => {
+const THEMES = [
+  'daily routine and home', 'food, cooking and restaurants', 'travel and transport', 'work and office',
+  'family and friends', 'school and learning', 'health and body', 'shopping and money',
+  'free time, sports and hobbies', 'feelings and opinions', 'weather, nature and animals', 'city, services and bureaucracy',
+];
+const pickTheme = () => THEMES[Math.floor(Math.random() * THEMES.length)];
+
+const hasUsage = (w) => !!w.example || (w.sentences && w.sentences.length > 0);
+
+// Which required fields are still missing for this word type?
+const missingFields = (w) => {
+  const m = [];
+  if (!hasUsage(w)) m.push('usage');
+  if (w.category === 'verb' && !w.conjugations) m.push('conjugations');
+  if (w.category === 'noun' && (!w.gender || !w.plural)) m.push('gender+plural');
+  if (w.category === 'adjective' && (!w.comparative || !w.superlative)) m.push('comparative+superlative');
+  return m;
+};
+
+const normalizeUsage = (w) => {
+  // make sure the example is always part of the usage list and translations line up
+  if (!w.example && w.sentences.length) {
+    w.example = w.sentences[0];
+    w.exampleEn = w.sentencesEn[0] || w.exampleEn || '';
+    w.sentences = w.sentences.slice(1);
+    w.sentencesEn = w.sentencesEn.slice(1);
+  }
+  while (w.sentencesEn.length < w.sentences.length) w.sentencesEn.push('');
+  return w;
+};
+
+const generateBatch = async (category, n, avoid, theme) => {
   const avoidHint = avoid.length
-    ? `\n\nDo NOT use any of these words (already learned): ${avoid.slice(0, 150).join(', ')}`
+    ? `\n\nDo NOT use any of these words (already learned): ${avoid.slice(0, 300).join(', ')}`
     : '';
 
   const parsed = await callGroqJSON(
@@ -85,9 +117,10 @@ const generateBatch = async (category, n, avoid) => {
 Always respond with valid JSON only — no markdown, no text outside the JSON.`,
     `Generate exactly ${n} DIFFERENT German words.
 Category: ${category}.
+Vary the words — this time lean towards the theme "${theme}", but stay within the category.
 ${CATEGORY_GUIDES[category] || CATEGORY_GUIDES.mixed}
 
-For EVERY word provide:
+For EVERY word provide ALL of these (usage sentences are mandatory):
 - "de": the German word
 - "en": English meaning
 - "ipa": IPA pronunciation in square brackets
@@ -100,10 +133,111 @@ For EVERY word provide:
 plus the category-specific fields described above.
 
 Return ONLY: {"words":[ ... ]}${avoidHint}`,
-    Math.min(8192, 700 * n + 800)
+    Math.min(8192, 600 * n + 1200),
+    { temperature: 0.7, reasoningEffort: 'low' }
   );
 
   return Array.isArray(parsed?.words) ? parsed.words : [];
+};
+
+// Second pass: fill in anything the first answer left out (usage sentences, conjugations, ...)
+const repairWords = async (words) => {
+  const broken = words.filter(w => missingFields(w).length);
+  if (!broken.length) return;
+
+  for (let i = 0; i < broken.length; i += 12) {
+    const chunk = broken.slice(i, i + 12);
+    try {
+      const parsed = await callGroqJSON(
+        `You are an expert German teacher. Always respond with valid JSON only.`,
+        `Complete the missing data for these German words (A1–B1 level).
+Words: ${JSON.stringify(chunk.map(w => ({ de: w.de, en: w.en, category: w.category, missing: missingFields(w) })))}
+
+For EVERY word return an object with:
+- "de": the same German word (unchanged)
+- "example": one natural German sentence using it
+- "exampleEn": English translation
+- "sentences": array of 3 short German usage sentences
+- "sentencesEn": array of the 3 English translations (same order)
+- verbs: "conjugations" {"ich","du","er","wir","ihr","sie"} present-tense forms only
+- nouns: "gender" (der/die/das) and "plural" (e.g. "die Häuser")
+- adjectives: "comparative" and "superlative"
+
+Return ONLY: {"words":[ ... ]}`,
+        Math.min(8192, 500 * chunk.length + 1200),
+        { temperature: 0.5, reasoningEffort: 'low' }
+      );
+      for (const r of (Array.isArray(parsed?.words) ? parsed.words : [])) {
+        const w = chunk.find(x => x.de.toLowerCase() === str(r?.de).toLowerCase());
+        if (!w) continue;
+        if (!w.example)   w.example   = str(r.example);
+        if (!w.exampleEn) w.exampleEn = str(r.exampleEn);
+        if (!w.sentences.length) {
+          w.sentences   = Array.isArray(r.sentences)   ? r.sentences.map(str).filter(Boolean)   : [];
+          w.sentencesEn = Array.isArray(r.sentencesEn) ? r.sentencesEn.map(str).filter(Boolean) : [];
+        }
+        if (w.category === 'verb' && !w.conjugations && r.conjugations && typeof r.conjugations === 'object') {
+          const c = r.conjugations;
+          w.conjugations = { ich: str(c.ich), du: str(c.du), er: str(c.er), wir: str(c.wir), ihr: str(c.ihr), sie: str(c.sie) };
+        }
+        if (w.category === 'noun') {
+          const g = str(r.gender).toLowerCase();
+          if (!w.gender && ['der', 'die', 'das'].includes(g)) w.gender = g;
+          if (!w.plural) w.plural = str(r.plural);
+        }
+        if (w.category === 'adjective') {
+          if (!w.comparative) w.comparative = str(r.comparative);
+          if (!w.superlative) w.superlative = str(r.superlative);
+        }
+      }
+    } catch (e) {
+      console.error('[grammar] repair pass failed:', e.message);
+    }
+  }
+};
+
+const wordKey = (category, de) => `${category}:${de.toLowerCase()}`;
+
+// Save every generated word into the permanent table (upsert, keeps cached verb tenses).
+const saveWords = async (userId, words, setId) => {
+  if (!words.length) return;
+  await GrammarWord.bulkWrite(words.map(w => ({
+    updateOne: {
+      filter: { userId, key: wordKey(w.category, w.de) },
+      update: {
+        $set: {
+          de: w.de, en: w.en, category: w.category, ipa: w.ipa || '',
+          gender: w.gender || '', plural: w.plural || '',
+          conjugations: w.conjugations || null,
+          comparative: w.comparative || '', superlative: w.superlative || '',
+          example: w.example || '', exampleEn: w.exampleEn || '',
+          sentences: w.sentences || [], sentencesEn: w.sentencesEn || [],
+          tip: w.tip || '', setId,
+        },
+      },
+      upsert: true,
+    },
+  })));
+};
+
+// One-time import: words from sets generated BEFORE the saved table existed.
+const backfillFromSets = async (userId) => {
+  try {
+    if (await GrammarWord.exists({ userId })) return;
+    const sets = await WordSet.find({ userId }).sort({ createdAt: 1 }).lean();
+    const byKey = new Map();
+    for (const set of sets) {
+      for (const raw of set.words || []) {
+        const w = cleanWord(raw, set.category);
+        if (!w) continue;
+        normalizeUsage(w);
+        byKey.set(wordKey(w.category, w.de), { w, setId: set._id });   // later sets win
+      }
+    }
+    for (const { w, setId } of byKey.values()) await saveWords(userId, [w], setId);
+  } catch (e) {
+    console.error('[grammar] backfill failed:', e.message);
+  }
 };
 
 // ── Generate ──────────────────────────────────────────────────────────────────
@@ -112,31 +246,38 @@ export const generateWordSet = async (req, res, next) => {
     const category = CATEGORY_GUIDES[req.body?.category] ? req.body.category : 'mixed';
     const count = Math.min(100, Math.max(1, parseInt(req.body?.count, 10) || 10));
 
-    // words the user has already seen in this category
-    const past = await WordSet.find(
-      category === 'mixed' ? { userId: req.userId } : { userId: req.userId, category }
-    ).sort({ createdAt: -1 }).limit(20).select('words.de').lean();
-    const seen = new Set(past.flatMap(s => (s.words || []).map(w => String(w.de || '').toLowerCase())));
-
-    // split into batches and run in parallel
-    const batches = [];
-    for (let left = count; left > 0; left -= BATCH_SIZE) batches.push(Math.min(BATCH_SIZE, left));
-
-    const results = await Promise.allSettled(
-      batches.map(n => generateBatch(category, n, [...seen]))
-    );
+    // Everything this user has EVER learned in this category (from the permanent table).
+    // This is what made verbs "stop working": the model kept re-suggesting the same common verbs,
+    // they were all filtered out as duplicates, and the request ended up empty.
+    await backfillFromSets(req.userId);
+    const seenFilter = category === 'mixed' ? { userId: req.userId } : { userId: req.userId, category };
+    const seenDocs = await GrammarWord.find(seenFilter).sort({ createdAt: -1 }).limit(600).select('de').lean();
+    const seen = new Set(seenDocs.map(d => d.de.toLowerCase()));
 
     const words = [];
     const used = new Set(seen);
-    for (const r of results) {
-      if (r.status !== 'fulfilled') continue;
-      for (const raw of r.value) {
-        const w = cleanWord(raw, category);
-        if (!w) continue;
-        const key = w.de.toLowerCase();
-        if (used.has(key)) continue;
-        used.add(key);
-        words.push(w);
+    const MAX_ROUNDS = 4;
+
+    for (let round = 0; round < MAX_ROUNDS && words.length < count; round++) {
+      const need = count - words.length;
+      const batches = [];
+      for (let left = need; left > 0; left -= BATCH_SIZE) batches.push(Math.min(BATCH_SIZE, left + (round > 0 ? 2 : 0)));
+
+      const avoid = [...used];
+      const results = await Promise.allSettled(
+        batches.map(n => generateBatch(category, n, avoid, pickTheme()))
+      );
+
+      for (const r of results) {
+        if (r.status !== 'fulfilled') { console.error('[grammar] batch failed:', r.reason?.message); continue; }
+        for (const raw of r.value) {
+          const w = cleanWord(raw, category);
+          if (!w) continue;
+          const key = w.de.toLowerCase();
+          if (used.has(key)) continue;
+          used.add(key);
+          words.push(w);
+        }
       }
     }
 
@@ -144,15 +285,26 @@ export const generateWordSet = async (req, res, next) => {
       return res.status(500).json({ message: 'Word generation failed. Please try again.' });
     }
 
+    const finalWords = words.slice(0, count);
+    await repairWords(finalWords);             // make sure usage / conjugations are there
+    finalWords.forEach(normalizeUsage);
+
     const wordSet = await WordSet.create({
       userId: req.userId,
       date: todayStr(),
       category,
-      words: words.slice(0, count),
+      words: finalWords,
     });
 
+    await saveWords(req.userId, finalWords, wordSet._id);
+
     await User.findByIdAndUpdate(req.userId, { $inc: { totalXP: 10 } }).catch(() => {});
-    res.status(201).json({ wordSet });
+    res.status(201).json({
+      wordSet,
+      note: finalWords.length < count
+        ? `Only ${finalWords.length} new words could be generated (you already know the rest). Try again for more.`
+        : undefined,
+    });
   } catch (err) { next(err); }
 };
 
@@ -210,6 +362,15 @@ export const verbTenses = async (req, res, next) => {
     if (!verb || verb.length > 40) {
       return res.status(400).json({ message: 'Please provide a German verb.' });
     }
+    const key = wordKey('verb', verb);
+
+    // Already generated before? Read it from the saved table instead of calling the AI again.
+    if (!req.body?.refresh) {
+      const saved = await GrammarWord.findOne({ userId: req.userId, key }).select('tenseExamples').lean();
+      if (saved?.tenseExamples?.present?.some?.(r => r.de)) {
+        return res.json({ tenseExamples: saved.tenseExamples, cached: true });
+      }
+    }
 
     const parsed = await callGroqJSON(
       `You are an expert German teacher. Always respond with valid JSON only.`,
@@ -226,7 +387,8 @@ Each row: {"pronoun":"I|you|he|she|it|we|they","de":"German sentence","en":"Engl
 
 Return ONLY:
 {"present":[7 rows],"past":[7 rows],"future":[7 rows]}`,
-      3000
+      4000,
+      { temperature: 0.4, reasoningEffort: 'low' }
     );
 
     const tenseExamples = {
@@ -239,6 +401,65 @@ Return ONLY:
       return res.status(500).json({ message: 'Could not generate tenses. Please try again.' });
     }
 
-    res.json({ tenseExamples });
+    // Save with the verb so it can be opened again later
+    await GrammarWord.updateOne(
+      { userId: req.userId, key },
+      { $set: { tenseExamples }, $setOnInsert: { de: verb, category: 'verb' } },
+      { upsert: true }
+    );
+
+    res.json({ tenseExamples, cached: false });
+  } catch (err) { next(err); }
+};
+
+// ── Saved words table ─────────────────────────────────────────────────────────
+export const listSavedWords = async (req, res, next) => {
+  try {
+    await backfillFromSets(req.userId);
+    const page  = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(5, parseInt(req.query.limit, 10) || 25));
+    const { category, q } = req.query;
+
+    const filter = { userId: req.userId };
+    if (category && category !== 'all' && CATEGORY_GUIDES[category]) filter.category = category;
+    if (q && String(q).trim()) {
+      const rx = new RegExp(String(q).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [{ de: rx }, { en: rx }];
+    }
+
+    const [words, total, counts] = await Promise.all([
+      GrammarWord.find(filter).sort({ category: 1, de: 1 }).skip((page - 1) * limit).limit(limit).lean(),
+      GrammarWord.countDocuments(filter),
+      GrammarWord.aggregate([
+        { $match: { userId: new mongoose.Types.ObjectId(req.userId) } },
+        { $group: { _id: '$category', n: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const categoryCounts = {};
+    let all = 0;
+    for (const c of counts) { categoryCounts[c._id] = c.n; all += c.n; }
+    categoryCounts.all = all;
+
+    res.json({ words, total, page, pages: Math.max(1, Math.ceil(total / limit)), counts: categoryCounts });
+  } catch (err) { next(err); }
+};
+
+export const deleteSavedWord = async (req, res, next) => {
+  try {
+    const r = await GrammarWord.deleteOne({ _id: req.params.id, userId: req.userId });
+    if (!r.deletedCount) return res.status(404).json({ message: 'Word not found' });
+    res.json({ success: true });
+  } catch (err) { next(err); }
+};
+
+// All saved verbs (for the Tenses page picker)
+export const listSavedVerbs = async (req, res, next) => {
+  try {
+    const verbs = await GrammarWord.find({ userId: req.userId, category: 'verb' })
+      .sort({ de: 1 }).select('de en tenseExamples.present').lean();
+    res.json({
+      verbs: verbs.map(v => ({ de: v.de, en: v.en || '', hasTenses: !!v.tenseExamples?.present?.length })),
+    });
   } catch (err) { next(err); }
 };
