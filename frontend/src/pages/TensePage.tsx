@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { useAppDispatch, useAppSelector } from '../hooks/redux'
-import { fetchTodaySet } from '../store/slices/grammarSlice'
 import api from '../utils/api'   // ← same import as in GrammarDrillPage
 import { Volume2, ChevronLeft, ChevronRight, ArrowLeft, Search } from 'lucide-react'
 
@@ -25,10 +23,8 @@ function speak(text: string) {
 }
 
 export default function TensePage() {
-  const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
-  const { todaySet } = useAppSelector(s => s.grammar)
 
   const startVerb = (location.state as any)?.verb as string | undefined
 
@@ -39,15 +35,13 @@ export default function TensePage() {
   const [tab, setTab]         = useState<keyof TenseData>('present')
   const [shown, setShown]     = useState<Set<number>>(new Set())
 
-  // Verbs from today's verb set (fetch it if the store doesn't have verbs yet)
-  useEffect(() => {
-    if (!todaySet || todaySet.category === 'noun') dispatch(fetchTodaySet('verb'))
-  }, [dispatch]) // eslint-disable-line
+  // Every verb you have ever generated (saved in the database)
+  const [savedVerbs, setSavedVerbs] = useState<{ de: string; hasTenses: boolean }[]>([])
+  const loadVerbs = () =>
+    api.get('/grammar/verbs').then(r => setSavedVerbs(r.data.verbs || [])).catch(() => {})
+  useEffect(() => { loadVerbs() }, [])
 
-  const verbList = useMemo(
-    () => (todaySet?.words || []).filter(w => w.category === 'verb').map(w => w.de),
-    [todaySet]
-  )
+  const verbList = useMemo(() => savedVerbs.map(v => v.de), [savedVerbs])
 
   const load = async (v: string) => {
     const clean = v.trim()
@@ -59,6 +53,7 @@ export default function TensePage() {
     try {
       const res = await api.post('/grammar/verb-tenses', { verb: clean })   // ← CHECK path prefix
       setData(res.data.tenseExamples)
+      loadVerbs()
     } catch {
       toast.error('Could not load tenses. Please try again.')
     } finally {
@@ -105,7 +100,7 @@ export default function TensePage() {
 
         {verbList.length > 0 && (
           <>
-            <label className="section-label">Or pick from your verb set</label>
+            <label className="section-label">Or pick from your saved verbs (✓ = tenses already saved)</label>
             <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
               {verbList.map(v => (
                 <button key={v} onClick={() => load(v)}
@@ -113,7 +108,7 @@ export default function TensePage() {
                     ${v === verb
                       ? 'bg-gold/10 border-gold/40 text-gold'
                       : 'bg-ink-800 border-white/[0.06] text-gray-400 hover:text-gray-200'}`}>
-                  {v}
+                  {savedVerbs.find(x => x.de === v)?.hasTenses ? '✓ ' : ''}{v}
                 </button>
               ))}
             </div>
